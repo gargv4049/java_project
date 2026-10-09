@@ -406,4 +406,5 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 ## 📄 License & Academic Attribution
 Developed for university and college property recovery systems. Free to use and extend for academic projects, institutional operations, and portfolio demonstrations.
 #   C a m p u s L o s t F o u n d P o r t a l  
+ #   j a v a _ p r o j e c t  
  
