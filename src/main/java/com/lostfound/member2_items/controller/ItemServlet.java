@@ -65,6 +65,8 @@ public class ItemServlet extends HttpServlet {
                 default:
                     handleGallery(request, response);
                     break;
+
+                    
             }
         } catch (Exception e) {
             request.setAttribute("error", e.getMessage());
