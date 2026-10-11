@@ -406,3 +406,24 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 ## 📄 License & Academic Attribution
 Developed for university and college property recovery systems. Free to use and extend for academic projects, institutional operations, and portfolio demonstrations.
 #
+## Member 5 — Admin & Analytics
+
+**Responsibilities**
+- Admin dashboard and system statistics
+- User management
+- Reports and analytics
+- Notification management
+- Unclaimed item disposal review
+- System audit log monitoring
+
+**Module Structure**
+- Controllers: `AdminServlet`, `NotificationServlet`, `ReportServlet`
+- DAO: `AdminDAO`, `AdminDAOImpl`, `ReportDAO`, `ReportDAOImpl`
+- Services: `AdminService`, `NotificationService`, `ReportService`
+- Utility: `PdfExporter`
+
+**Technology Stack**
+- Java Servlets and JSP
+- JDBC and MySQL
+- Apache Tomcat
+- Bootstrap
