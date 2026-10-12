@@ -231,6 +231,12 @@ java_project-main/
 
 ---
 
+##UML Design
+1. UML Use-Case Diagram
+   <img width="1447" height="853" alt="Screenshot (85)" src="https://github.com/user-attachments/assets/c56b8f36-9c95-4408-87fd-60e7c8bb64a5" />
+
+
+
 ## 🔐 Authentication and password recovery
 
 - Registration asks for a full name, unique username/email identifier, password, and confirmation. The identifier is stored in the existing unique `users.email` column for compatibility with the rest of the application; it is normalized to lowercase and is not verified or used for email.
