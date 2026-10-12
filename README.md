@@ -42,6 +42,30 @@ This is a suggested week-by-week development and academic reporting plan for the
 Use the **Comprehensive Testing Checklist** section to record the checks actually run. Mark an item complete only after verifying it; do not treat this proposed timeline as a test report.
 
 ---
+Database Design & UI Mock-ups
+1. Database Design (Schema & Architecture)
+   The database for the application is designed to handle user management, item reporting, spatial/textual matching, secure claims, and administrative auditing. Based on the model classes (User, Item, Category, Claim, MatchResult, HandoverRecord, Notification, AuditLog) and configuration files (db.properties, lost_found.sql) found in your project, the relational database schema is structured as follows:
+Core Database Tables
+-users Table (member1_auth): Stores user credentials, hashed passwords via BCryptUtil, and roles.
+ user_id (PK), name, email, password, role, created_at
+-categories Table: Classifies campus items into logical groups (e.g., Electronics, Documents, Accessories).
+ category_id (PK), name, description
+-items Table (member2_items): Stores details for both lost and found item submissions along with geographical metadata.
+ item_id (PK), title, description, category_id (FK), user_id (FK), item_type (LOST/FOUND), location, latitude, longitude, date_time, image_url, status
+-claims Table (member4_claims): Manages ownership proofs submitted by users for specific items.
+ claim_id (PK), item_id (FK), user_id (FK), proof_details, status, claim_date
+-match_results Table (member3_matching): Stores calculated similarity scores between lost and found items using Haversine and Levenshtein algorithms.
+ match_id (PK), lost_item_id (FK), found_item_id (FK), match_score, status
+-handover_records Table: Tracks secure pickups verified using OTP and QR codes (QRCodeUtil).
+ handover_id (PK), claim_id (FK), verified_by_admin_id (FK), handover_date, qr_code_data
+-notifications & audit_logs Tables (member5_admin): Tracks user alerts and system-wide administrative event logs.
+
+1. UI Mock-ups / Wireframe Flow Diagram
+   <img width="622" height="2046" alt="IMG_20261012_105451 jpg" src="https://github.com/user-attachments/assets/264561a3-19bf-4431-8cc1-57d8d7a3cc86" />
+
+2. Database Design (ER Schema) Diagram
+   <img width="819" height="1714" alt="IMG_20261012_101835 jpg" src="https://github.com/user-attachments/assets/72dd1968-57b2-449c-91d3-7a2b4bef3ed3" />
+
 
 ## 🛠️ Technology Stack
 
