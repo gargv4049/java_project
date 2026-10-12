@@ -15,6 +15,10 @@ public class ValidationUtil {
             "^(\\+?[0-9]{1,4}[ -]?)?[0-9]{7,15}$"
     );
 
+    private static final Pattern IDENTIFIER_PATTERN = Pattern.compile(
+            "^[A-Za-z0-9._@+-]{3,150}$"
+    );
+
     private ValidationUtil() {
         // Utility class
     }
@@ -23,16 +27,24 @@ public class ValidationUtil {
         if (email == null || email.trim().isEmpty()) {
             return false;
         }
+
         return EMAIL_PATTERN.matcher(email.trim()).matches();
+    }
+
+    public static boolean isValidIdentifier(String identifier) {
+        return identifier != null
+                && IDENTIFIER_PATTERN.matcher(identifier.trim()).matches();
     }
 
     public static boolean isValidPassword(String password) {
         if (password == null || password.length() < 8) {
             return false;
         }
-        // At least one letter and at least one digit or special char
+
+        // At least one letter and one digit or special character
         boolean hasLetter = false;
         boolean hasDigitOrSpecial = false;
+
         for (char c : password.toCharArray()) {
             if (Character.isLetter(c)) {
                 hasLetter = true;
@@ -40,6 +52,7 @@ public class ValidationUtil {
                 hasDigitOrSpecial = true;
             }
         }
+
         return hasLetter && hasDigitOrSpecial;
     }
 
@@ -47,6 +60,7 @@ public class ValidationUtil {
         if (phone == null || phone.trim().isEmpty()) {
             return true; // Optional field
         }
+
         return PHONE_PATTERN.matcher(phone.trim()).matches();
     }
 
@@ -55,12 +69,13 @@ public class ValidationUtil {
     }
 
     /**
-     * Sanitizes strings to prevent basic XSS when rendering or logging.
+     * Sanitizes strings for basic HTML output encoding.
      */
     public static String sanitize(String input) {
         if (input == null) {
             return "";
         }
+
         return input.trim()
                 .replace("&", "&amp;")
                 .replace("<", "&lt;")
@@ -79,7 +94,9 @@ public class ValidationUtil {
                 return Long.parseLong(val.trim());
             }
         } catch (NumberFormatException ignored) {
+            // Invalid number
         }
+
         return null;
     }
 
@@ -89,7 +106,9 @@ public class ValidationUtil {
                 return Integer.parseInt(val.trim());
             }
         } catch (NumberFormatException ignored) {
+            // Invalid number
         }
+
         return null;
     }
 
@@ -99,7 +118,9 @@ public class ValidationUtil {
                 return Double.parseDouble(val.trim());
             }
         } catch (NumberFormatException ignored) {
+            // Invalid number
         }
+
         return null;
     }
 }

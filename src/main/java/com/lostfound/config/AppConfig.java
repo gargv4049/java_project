@@ -112,11 +112,11 @@ public class AppConfig {
     }
 
     public static String getDbUsername() {
-        return getProperty("db.username", getProperty("DB_USERNAME", "root"));
+        return getProperty("db.username", getProperty("DB_USERNAME", ""));
     }
 
     public static String getDbPassword() {
-        return getProperty("db.password", getProperty("DB_PASSWORD", "New@123"));
+        return getProperty("db.password", getProperty("DB_PASSWORD", ""));
     }
 
     public static String getUploadDir() {
@@ -131,41 +131,4 @@ public class AppConfig {
         return Integer.parseInt(getProperty("session.timeout.minutes", getProperty("SESSION_TIMEOUT_MINUTES", "30")));
     }
 
-    public static String getGoogleClientId() {
-        return getProperty("google.client.id", getProperty("GOOGLE_CLIENT_ID", ""));
-    }
-
-    public static String getGoogleClientSecret() {
-        return getProperty("google.client.secret", getProperty("GOOGLE_CLIENT_SECRET", ""));
-    }
-
-    public static String getGoogleCallbackUrl() {
-        return getProperty("google.callback.url", getProperty("GOOGLE_CALLBACK_URL", "http://localhost:8080/LostFoundManagementSystem/api/auth/google/callback"));
-    }
-
-    public static String getGmailUser() {
-        return getProperty("gmail.user", getProperty("GMAIL_USER", ""));
-    }
-
-    public static String getGmailAppPassword() {
-        return getProperty("gmail.app.password", getProperty("GMAIL_APP_PASSWORD", ""));
-    }
-
-    public static boolean isGmailConfigured() {
-        String u = getGmailUser();
-        String p = getGmailAppPassword();
-        return u != null && !u.isBlank() && p != null && !p.isBlank() && !p.contains("your_16_digit");
-    }
-
-    public static String getAllowedEmailDomain() {
-        return getProperty("allowed.email.domain", getProperty("ALLOWED_EMAIL_DOMAIN", "gmail.com"));
-    }
-
-    public static String getJwtSecret() {
-        return getProperty("jwt.secret", getProperty("JWT_SECRET", "campus_lost_found_dev_secret_key_2026"));
-    }
-
-    public static String getAppUrl() {
-        return getProperty("app.url", getProperty("APP_URL", "http://localhost:8080/LostFoundManagementSystem"));
-    }
 }

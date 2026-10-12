@@ -76,13 +76,6 @@
             <version>${mysql.version}</version>
         </dependency>
 
-        <!-- H2 Database (Embedded Fallback for Zero-Config Execution) -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>2.3.232</version>
-        </dependency>
-
         <!-- BCrypt -->
         <dependency>
             <groupId>org.mindrot</groupId>
@@ -116,20 +109,6 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>${gson.version}</version>
-        </dependency>
-
-        <!-- Jakarta Mail API -->
-        <dependency>
-            <groupId>jakarta.mail</groupId>
-            <artifactId>jakarta.mail-api</artifactId>
-            <version>2.1.3</version>
-        </dependency>
-
-        <!-- Eclipse Angus Mail (Jakarta Mail Implementation for Gmail SMTP) -->
-        <dependency>
-            <groupId>org.eclipse.angus</groupId>
-            <artifactId>angus-mail</artifactId>
-            <version>2.0.3</version>
         </dependency>
 
     </dependencies>

@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Registration Controller Servlet.
@@ -20,6 +22,7 @@ import java.io.IOException;
 @WebServlet(name = "RegisterServlet", urlPatterns = {"/register", "/api/register"})
 public class RegisterServlet extends HttpServlet {
 
+    private static final Logger LOGGER = Logger.getLogger(RegisterServlet.class.getName());
     private final UserService userService = new UserServiceImpl();
     private final AdminDAO adminDAO = new AdminDAOImpl();
 
@@ -31,30 +34,33 @@ public class RegisterServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String name = request.getParameter("name");
-        String email = request.getParameter("email");
+        String identifier = request.getParameter("identifier");
+        if (identifier == null) {
+            identifier = request.getParameter("email");
+        }
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
-        String phone = request.getParameter("phone");
-        String department = request.getParameter("department");
-        String role = request.getParameter("role");
 
         User user = new User();
         user.setName(name);
-        user.setEmail(email);
+        user.setEmail(identifier);
         user.setPassword(password);
-        user.setPhone(phone);
-        user.setDepartment(department);
-        user.setRole(role);
 
         try {
             User registeredUser = userService.register(user, confirmPassword);
-            adminDAO.logAudit(registeredUser.getUserId(), "REGISTER: " + registeredUser.getEmail(), request.getRemoteAddr());
+            adminDAO.logAudit(registeredUser.getUserId(), "REGISTER", request.getRemoteAddr());
 
             request.getSession(true).setAttribute("flashSuccess", "Registration successful! You can now log in with your credentials.");
             response.sendRedirect(request.getContextPath() + "/login.jsp");
 
         } catch (Exception e) {
-            request.setAttribute("error", e.getMessage());
+            if (e instanceof IllegalArgumentException) {
+                request.setAttribute("error", e.getMessage());
+            } else {
+                LOGGER.log(Level.SEVERE, "Registration failed due to a server error.", e);
+                request.setAttribute("error", "Unable to register right now. Please try again.");
+            }
+            user.setPassword(null);
             request.setAttribute("user", user);
             request.getRequestDispatcher("/register.jsp").forward(request, response);
         }

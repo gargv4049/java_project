@@ -1,7 +1,7 @@
 # Campus Lost & Found Management System
 
 > **Enterprise-Grade Java Web Application for University & College Campuses**  
-> Built with Pure Java Servlets (Jakarta EE), JSP, JDBC, MySQL 8+, Bootstrap 5, Apache PDFBox, and Google ZXing.  
+> Built with Java Servlets (Jakarta EE), JSP, JDBC, MySQL 8+, Bootstrap 5, Apache PDFBox, and ZXing.
 > Directly importable and runnable in **IntelliJ IDEA**, **JDK 25**, and **Apache Tomcat 11**.
 
 ---
@@ -14,10 +14,32 @@ The **Campus Lost & Found Management System** is a complete, production-grade we
 - **Strict Jakarta EE 11 / Servlet 6.1 Compatibility**: Optimized for Apache Tomcat 11 and JDK 25 without any legacy `javax.*` dependencies.
 - **Pure Java MVC Architecture**: No Spring Boot, Spring MVC, or Hibernate abstractions. Built with clean Controller &rarr; Service &rarr; DAO &rarr; Database separation of concerns.
 - **Intelligent Algorithmic Matching Engine**: Combines custom **Levenshtein Text Edit Distance** (40%), **Haversine Geospatial Distance Formula** (30%), **Temporal Proximity** (20%), and **Category Correlation** (10%) to discover high-confidence matches automatically.
-- **Two-Factor Claim Handover Protocol**: Employs cryptographically secure 6-digit Time-based OTPs and Google ZXing 2D QR Code tokens to verify claimants before physical handover.
+- **Two-Factor Claim Handover Protocol**: Employs cryptographically secure 6-digit time-based OTPs and QR code tokens to verify claimants before physical handover.
 - **ACID Transactional Handover**: Item status transitions (`ACTIVE` &rarr; `CLAIMED` &rarr; `RETURNED`) execute inside atomic database transactions (`setAutoCommit(false)` with rollback protection).
 - **Executive Administration & PDF Reporting**: Dynamic analytics dashboard with live Chart.js graphs, user role management, content moderation flags, unclaimed property disposal tracker, and automated downloadable PDF reports via Apache PDFBox.
-- **Enterprise Security**: BCrypt password hashing (cost factor 12), parameterized `PreparedStatement` queries everywhere, HTTP session invalidation on logout, CSRF & XSS sanitization, and strict whitelist file-upload controls.
+- **Security Controls**: BCrypt password hashing (cost factor 12), parameterized `PreparedStatement` queries, session invalidation on logout, role/ownership checks, and allowlisted file-upload types.
+- **Database Authentication**: Accounts register with a unique username or email identifier and BCrypt password; sign-in and password changes use MySQL only. No external sign-in or email verification is required.
+
+## 🗓️ 12-Week Project Work Plan
+
+This is a suggested week-by-week development and academic reporting plan for the features in this repository. It describes project work areas, not dated evidence that each activity was completed in a particular week. Adjust the sequence and completion status to match the actual course schedule and project records.
+
+| Week | Planned work | Deliverable / review point |
+|---|---|---|
+| 1 | Define the campus lost-and-found problem, users, goals, scope, and functional requirements. | Requirements and initial use cases for students, faculty, and administrators. |
+| 2 | Design the application architecture, database entities, relationships, and development environment. | MVC/service/DAO design, MySQL schema review, and a reproducible local build setup. |
+| 3 | Implement account registration, login/logout, profile management, password hashing, and protected-route behavior. | Database-backed authentication and role-aware sessions. |
+| 4 | Implement lost/found item reporting, editing, ownership checks, image uploads, and the item gallery. | Item lifecycle flows with validated metadata and safe image storage. |
+| 5 | Add keyword, category, and location search and gallery filtering. | Search and filter flows returning relevant active listings. |
+| 6 | Implement and review item matching using text, location, date, and category scores. | Match results with the documented component weights and score breakdown. |
+| 7 | Implement ownership claims, claim review, and claimant/owner views. | Claim submission and review workflow with status validation. |
+| 8 | Add OTP/QR verification and transactional item handover. | Verified handover flow that updates claim and item state consistently. |
+| 9 | Implement administration workflows for user management, notifications, and community reports. | Role-protected moderation and administration pages. |
+| 10 | Add administrative analytics, PDF reporting, audit history, and aged-item disposal review. | Operational dashboard and export/review features. |
+| 11 | Integrate end-to-end flows; test validation, authorization, failure paths, uploads, database operations, and browser behavior. | Test results and a prioritized list of issues resolved or still open. |
+| 12 | Prepare deployment, user/setup documentation, final demonstration, and maintenance handover. | Packaged WAR, deployment instructions, final review, and future-maintenance notes. |
+
+Use the **Comprehensive Testing Checklist** section to record the checks actually run. Mark an item complete only after verifying it; do not treat this proposed timeline as a test report.
 
 ---
 
@@ -29,7 +51,7 @@ The **Campus Lost & Found Management System** is a complete, production-grade we
 | **Persistence** | JDBC (Java Database Connectivity), MySQL Connector/J 8.4, Raw SQL PreparedStatements |
 | **Security & Hashing** | jBCrypt 0.4 (Blowfish salt rounds = 12), Secure HTTP Session Management |
 | **Algorithms** | Custom Levenshtein Distance (Text), Custom Haversine Formula (GPS Proximity) |
-| **Third-Party Libraries** | Google ZXing 3.5.3 (QR Code Generation), Apache PDFBox 3.0.4 (PDF Engine), Google Gson 2.11.0 |
+| **Third-Party Libraries** | ZXing 3.5.3 (QR Code Generation), Apache PDFBox 3.0.4 (PDF Engine), Gson 2.11.0 |
 | **Frontend UI** | JSP, HTML5, CSS3, JavaScript (ES6), Bootstrap 5.3.3, Bootstrap Icons, Chart.js 4.4 |
 | **Build Tool & Packaging** | Apache Maven 3.10+, WAR (Web Application Archive) |
 | **Runtime Server** | Apache Tomcat 11.0.x (Jakarta EE 10/11) |
@@ -40,18 +62,18 @@ The **Campus Lost & Found Management System** is a complete, production-grade we
 ## 📂 Project Architecture & Directory Structure
 
 ```
-CampusLostFoundPortal/
+java_project-main/
 │
 ├── pom.xml                                      # Maven configuration (Jakarta EE, Tomcat 11, JDK 25)
 ├── README.md                                    # Comprehensive system documentation
 │
 ├── database/
-│   └── lost_found.sql                           # Complete DDL schema & BCrypt-hashed seed data
+│   └── lost_found.sql                           # Complete DDL schema & sample data
 │
 └── src/
     └── main/
         ├── resources/
-        │   └── db.properties                    # Centralized database credentials & app configs
+        │   └── db.properties                    # Non-secret defaults; credentials come from environment
         │
         ├── java/
         │   └── com/
@@ -146,7 +168,7 @@ CampusLostFoundPortal/
         │
         └── webapp/
             ├── index.jsp                        # Homepage with live metrics & quick actions
-            ├── login.jsp                        # User sign-in with 1-click test credentials
+            ├── login.jsp                        # User sign-in
             ├── register.jsp                     # Student & Faculty registration
             │
             ├── includes/
@@ -209,17 +231,20 @@ CampusLostFoundPortal/
 
 ---
 
-## 🔐 Default Development Credentials
+## 🔐 Authentication and password recovery
 
-The database script automatically populates pre-configured test users with verified BCrypt password hashes:
+- Registration asks for a full name, unique username/email identifier, password, and confirmation. The identifier is stored in the existing unique `users.email` column for compatibility with the rest of the application; it is normalized to lowercase and is not verified or used for email.
+- Passwords are stored only as BCrypt hashes (cost 12). Login checks the identifier and password against MySQL. Unauthenticated requests to protected application routes are redirected to sign in; login invalidates any prior session before establishing a fresh one, and logout invalidates it.
+- Signed-in users change passwords at **Change Password**; their current password is required.
+- There is no public password-reset endpoint. If a user is locked out, an administrator verifies the person's identity in person, generates a strong one-time temporary password, hashes it with the application's BCrypt utility, and updates only that account through a restricted database administrator account. The temporary password is provided privately and the user immediately signs in and changes it using the normal current-password-required flow. Do not email passwords or perform resets based only on an online request.
 
-| Role | Email Address | Plaintext Password | Access Level |
-|---|---|---|---|
-| **ADMIN** | `admin@college.com` | `Admin@123` | Full administrative control, user moderation, analytics, PDF export, content review |
-| **STUDENT** | `student@college.com` | `Student@123` | Report lost/found items, browse, claim found items, track own inventory |
-| **FACULTY** | `faculty@college.com` | `Faculty@123` | Faculty permissions, department logging, property handover verification |
-
-> 💡 **Tip:** On `login.jsp`, click any of the **Quick Test Credentials** buttons to instantly fill the login form!
+Example SQL after generating a BCrypt hash securely:
+```sql
+UPDATE users
+SET password = '<BCrypt hash of a strong temporary password>'
+WHERE user_id = <verified user id>;
+```
+Confirm exactly one row was affected. Never put a plaintext password or production database credential in SQL committed to source control.
 
 ---
 
@@ -268,35 +293,22 @@ mysql -u root -p
 ```
 
 ### Step 2: Import the Database Script
-Execute the bundled SQL script located at `database/lost_found.sql`:
-```sql
-source c:/Users/gargv/Desktop/CampusLostFoundPortal/database/lost_found.sql;
-```
-*(Or in MySQL Workbench: File &rarr; Open SQL Script &rarr; select `database/lost_found.sql` &rarr; Execute).*
-
-### Step 3: Configure Database Password
-Open `src/main/resources/db.properties` and ensure `db.password` matches your local MySQL root password:
-```properties
-db.url=jdbc:mysql://localhost:3306/lost_found_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata&characterEncoding=UTF-8
-db.username=root
-db.password=CHANGE_THIS_PASSWORD
+From the project root, execute the bundled SQL script:
+```powershell
+mysql -u root -p < .\database\lost_found.sql
 ```
 
----
+The script creates `lost_found_db`, but it also drops and recreates the application's tables before loading seed data. Use it only for a fresh or disposable development database; do not run it against a database whose data must be preserved. In MySQL Workbench, open `database/lost_found.sql` and execute it only after confirming the target database can be reset.
+
+### Step 3: Configure Database Credentials
+Keep database credentials out of source files. Set `DB_USERNAME` and `DB_PASSWORD` in the Tomcat process environment. Alternatively, keep them in a local `.env` file and copy that file to Tomcat's `CATALINA_BASE` as `.env`; the application checks that location. A `.env` file in the project directory may not be found when Tomcat is launched from another directory. Never commit a real `.env` file or put production credentials in `src/main/resources/db.properties`.
 
 ## 🔨 Maven Build Commands
 
-From the project root directory:
+From the project root directory in PowerShell:
 
 ```powershell
-# 1. Clean build directory
-mvn clean
-
-# 2. Compile all source files
-mvn compile
-
-# 3. Package WAR application
-mvn package
+mvn clean package
 ```
 
 The resulting deployable WAR file is generated at:
@@ -306,6 +318,30 @@ target/LostFoundManagementSystem.war
 
 ---
 
+## 💻 PowerShell deployment to Tomcat 11
+
+Use a dedicated MySQL account rather than root when possible. This example prompts for the password without writing it to a project file, copies the WAR, and starts Tomcat in the foreground:
+
+```powershell
+$env:CATALINA_HOME = 'C:\apache-tomcat-11.0.x'
+$env:DB_USERNAME = 'lostfound_app'
+$securePassword = Read-Host 'MySQL password' -AsSecureString
+$passwordPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
+try {
+    $env:DB_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer)
+    mvn clean package
+    if ($LASTEXITCODE -ne 0) { throw 'Maven build failed.' }
+    Copy-Item .\target\LostFoundManagementSystem.war "$env:CATALINA_HOME\webapps\LostFoundManagementSystem.war" -Force
+    & "$env:CATALINA_HOME\bin\catalina.bat" run
+}
+finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPointer)
+    Remove-Item Env:DB_PASSWORD -ErrorAction SilentlyContinue
+}
+```
+
+Open `http://localhost:8080/LostFoundManagementSystem/`; use HTTPS in production so the session cookie is transported over TLS. Stop the foreground server with Ctrl+C.
+
 ## 💻 IntelliJ IDEA & Tomcat 11 Setup Guide
 
 Follow these exact steps to run the application inside IntelliJ IDEA with Apache Tomcat 11:
@@ -313,7 +349,7 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 ### 1. Open the Project in IntelliJ IDEA
 1. Launch **IntelliJ IDEA**.
 2. Select **File &rarr; Open...**
-3. Navigate to `c:\Users\gargv\Desktop\CampusLostFoundPortal` and select the directory (or select `pom.xml`).
+3. Navigate to the project directory containing `pom.xml` and select it (or select `pom.xml` directly).
 4. Click **Open as Project**.
 
 ### 2. Verify Project SDK (JDK 25 / Java 17+)
@@ -350,42 +386,42 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 ## 📋 Comprehensive Testing Checklist
 
 ### 1. Authentication & Security
-- [x] **Registration**: Register a new student account (`test@college.com`). Verify success redirect and flash banner.
-- [x] **Duplicate Email**: Attempt registering with `admin@college.com`. Verify duplicate rejection.
-- [x] **Weak Password**: Attempt registering with password `< 8` chars. Verify validation error.
-- [x] **Login**: Sign in with `student@college.com` / `Student@123`. Verify session established and role badge shown.
-- [x] **Quick Test Presets**: Use 1-click credential buttons on `login.jsp`.
-- [x] **Role Authorization**: Attempt accessing `/admin/dashboard` as a Student. Verify `403 Forbidden` error.
-- [x] **Logout**: Click Logout. Verify session invalidation and flash confirmation.
+- [ ] Register a new user with a username (not an email), matching passwords, then verify the account is stored with a BCrypt hash.
+- [ ] Register another account using the same identifier with different letter casing; verify the unique identifier is rejected.
+- [ ] Sign in using the registered identifier/password; verify the session is established and the profile/role is shown.
+- [ ] Try a wrong password and verify the request is rejected without establishing a session.
+- [ ] Request a protected URL while signed out and verify redirection to login; verify public search/gallery remains available.
+- [ ] Change password while signed in; confirm an incorrect current password fails and the correct current password succeeds.
+- [ ] Log out, then verify the session is invalidated and protected URLs redirect to login.
 
 ### 2. Item Inventory
-- [x] **Report Lost**: Submit lost item with campus location, date, and image. Verify redirect to details page.
-- [x] **Report Found**: Submit found item with custody details.
-- [x] **GPS Auto-Fill**: Click "GPS" button on reporting forms to populate coordinates via browser API.
-- [x] **Image Upload**: Upload `.jpg`, `.png`, or `.webp` file (`< 5MB`). Verify safe UUID renaming.
-- [x] **Ownership Protection**: Log in as student B. Verify cannot edit or delete student A's reported item.
-- [x] **Gallery Filters**: Filter gallery by "Lost Only", "Found Only", or "All Items".
+- [ ] **Report Lost**: Submit lost item with campus location, date, and image. Verify redirect to details page.
+- [ ] **Report Found**: Submit found item with custody details.
+- [ ] **GPS Auto-Fill**: Click "GPS" button on reporting forms to populate coordinates via browser API.
+- [ ] **Image Upload**: Upload `.jpg`, `.jpeg`, `.jfif`, `.png`, or `.webp` file (`< 5MB`). Verify image preview, safe UUID renaming, item detail display, and persistence after a Tomcat redeploy.
+- [ ] **Ownership Protection**: Log in as student B. Verify cannot edit or delete student A's reported item.
+- [ ] **Gallery Filters**: Filter gallery by "Lost Only", "Found Only", or "All Items".
 
 ### 3. Search & Matching
-- [x] **Multi-Criteria Search**: Search with keyword "Wallet", category "Wallet", and location "Library".
-- [x] **Levenshtein Scoring**: Open item #1 details and click "Run Algorithm Match". Verify Levenshtein text score percentage.
-- [x] **Haversine Distance**: Verify GPS distance percentage calculation.
-- [x] **Composite Score**: Verify total score calculation $(40\% + 30\% + 20\% + 10\%)$ and Rating Badge (*Excellent Match / Good Match*).
+- [ ] **Multi-Criteria Search**: Search with keyword "Wallet", category "Wallet", and location "Library".
+- [ ] **Levenshtein Scoring**: Open an item with a matching counterpart and verify the text score.
+- [ ] **Haversine Distance**: Verify GPS distance percentage calculation.
+- [ ] **Composite Score**: Verify total score calculation $(40\% + 30\% + 20\% + 10\%)$ and rating badge.
 
 ### 4. Claims & Handover
-- [x] **File Claim**: As a student, view a found item reported by another user. Click "Claim This Item". Provide reason and proof.
-- [x] **Self-Claim Prevention**: Attempt to claim an item you reported yourself. Verify security policy blocks the request.
-- [x] **Review Claim**: Log in as the found item reporter or Admin. View claim details and click "Approve Claim".
-- [x] **OTP & QR Generation**: Verify 6-digit OTP code and ZXing QR code image generated on claim details page.
-- [x] **OTP Verification**: Enter 6-digit OTP on `/claims/verify`. Verify transition to `VERIFIED`.
-- [x] **Transactional Handover**: Select verification method, enter remarks, and submit handover. Verify item status updates to `RETURNED` and claim status to `COMPLETED`.
+- [ ] **File Claim**: As a student, view a found item reported by another user. Click "Claim This Item". Provide reason and proof.
+- [ ] **Self-Claim Prevention**: Attempt to claim an item you reported yourself. Verify security policy blocks the request.
+- [ ] **Review Claim**: Log in as the found item reporter or Admin. View claim details and click "Approve Claim".
+- [ ] **OTP & QR Generation**: Verify 6-digit OTP code and QR code generated on claim details page.
+- [ ] **OTP Verification**: Enter the OTP on the verification page. Verify transition to `VERIFIED`.
+- [ ] **Transactional Handover**: Submit the verified handover. Verify item status updates to `RETURNED` and claim status to `COMPLETED`.
 
 ### 5. Administration & Reporting
-- [x] **Dashboard Metrics**: Log in as `admin@college.com`. Verify live counts for users, items, claims, and reports.
-- [x] **User Management**: Search users, toggle Block/Unblock, and change roles. Verify protection of the last remaining admin.
-- [x] **Content Moderation**: Flag an item from the details page. View and resolve the report from `/admin/reports`.
-- [x] **Analytics Charts**: Visit `/admin/analytics`. Verify dynamic Chart.js rendering of category counts and status distributions.
-- [x] **PDF Audit Export**: Click "Export PDF Audit Report" from the dashboard. Verify immediate download of `LostFound_Campus_Report.pdf` with institutional header, summary counts, and item inventory table.
+- [ ] **Dashboard Metrics**: Sign in as an administrator. Verify live counts for users, items, claims, and reports.
+- [ ] **User Management**: Search users, toggle Block/Unblock, and change roles. Verify protection of the last remaining admin.
+- [ ] **Content Moderation**: Flag an item from the details page. View and resolve the report from `/admin/reports`.
+- [ ] **Analytics Charts**: Visit `/admin/analytics`. Verify dynamic Chart.js rendering of category counts and status distributions.
+- [ ] **PDF Audit Export**: Export the PDF report and verify the download and included data.
 
 ---
 
@@ -393,16 +429,23 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 
 | Issue / Error | Cause | Resolution |
 |---|---|---|
-| **`Access denied for user 'root'@'localhost'`** | Incorrect MySQL root password. | Update `db.password` in `src/main/resources/db.properties` to match your local MySQL server. |
+| **Database credential error** | `DB_USERNAME` or `DB_PASSWORD` is not set in the Tomcat process environment, or credentials are invalid. | Set both environment variables before starting Tomcat; keep credentials out of the repository. |
 | **`Unknown database 'lost_found_db'`** | Database script not executed yet. | Execute `database/lost_found.sql` using MySQL CLI or Workbench. |
 | **`java.lang.ClassNotFoundException: com.mysql.cj.jdbc.Driver`** | MySQL JDBC Driver missing from classpath. | Run `mvn clean package` or ensure `mysql-connector-j` is included in Tomcat server libraries. |
 | **`404 Not Found` when opening application** | Application context path mismatch. | In Tomcat configuration &rarr; Deployment &rarr; set Application context strictly to `/LostFoundManagementSystem`. |
 | **`500 - java.lang.NoClassDefFoundError: jakarta/servlet/...`** | Older Tomcat version (Tomcat 9 or 8) used. | Apache Tomcat 11 is required for Jakarta EE 11 / Servlet 6.1 specification. |
 | **`File upload size exceeds limit`** | Uploaded image $> 5 \text{ MB}$. | Choose an image file smaller than 5 MB or compress the picture before upload. |
-| **`OTP Expired` error during handover** | 5-minute security timeout elapsed. | Re-open claim and re-approve to issue a fresh 5-minute verification OTP code. |
+| **`OTP Expired` error during handover** | 5-minute security timeout elapsed. | Ask the item reporter or an administrator to open the approved claim and select **Regenerate OTP / QR**. |
 
 ---
 
 ## 📄 License & Academic Attribution
 Developed for university and college property recovery systems. Free to use and extend for academic projects, institutional operations, and portfolio demonstrations.
-#
+
+## 🧹 Keeping This README Current
+
+- Keep setup commands relative to the repository root; do not add personal machine paths, local passwords, or real `.env` values.
+- Update the architecture, dependencies, database steps, and deployment instructions whenever the corresponding code or configuration changes.
+- Keep the 12-week plan as a planning outline unless actual dated progress records are available.
+- Mark testing checklist entries as complete only after a test has been run and verified; update troubleshooting entries when a root cause or fix changes.
+- Before publishing, check links, command paths, Tomcat context names, and Maven artifact names against the current project.

@@ -33,76 +33,33 @@ public class UserDAOImpl implements UserDAO {
             user.setStudentId(rs.getString("student_id"));
         } catch (SQLException ignored) {}
 
-        try {
-            user.setGoogleId(rs.getString("google_id"));
-        } catch (SQLException ignored) {}
-
-        try {
-            user.setProfileImage(rs.getString("profile_image"));
-        } catch (SQLException ignored) {}
-
-        try {
-            user.setEmailVerified(rs.getBoolean("email_verified"));
-        } catch (SQLException ignored) {}
-
-        try {
-            String provider = rs.getString("auth_provider");
-            if (provider != null) user.setAuthProvider(provider);
-        } catch (SQLException ignored) {}
-
         return user;
     }
 
     @Override
     public User register(User user) throws SQLException {
-        String fullSql = "INSERT INTO users (name, email, password, phone, role, department, status, student_id, google_id, profile_image, email_verified, auth_provider) " +
-                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String legacySql = "INSERT INTO users (name, email, password, phone, role, department, status) " +
-                           "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (name, email, password, phone, role, department, status) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, user.getName());
+            statement.setString(2, user.getEmail());
+            statement.setString(3, user.getPassword());
+            statement.setString(4, user.getPhone());
+            statement.setString(5, user.getRole() != null ? user.getRole() : "STUDENT");
+            statement.setString(6, user.getDepartment());
+            statement.setString(7, user.getStatus() != null ? user.getStatus() : "ACTIVE");
 
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            PreparedStatement ps;
-            try {
-                ps = conn.prepareStatement(fullSql, Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1, user.getName());
-                ps.setString(2, user.getEmail());
-                ps.setString(3, user.getPassword());
-                ps.setString(4, user.getPhone());
-                ps.setString(5, user.getRole() != null ? user.getRole() : "STUDENT");
-                ps.setString(6, user.getDepartment());
-                ps.setString(7, user.getStatus() != null ? user.getStatus() : "ACTIVE");
-                ps.setString(8, user.getStudentId());
-                ps.setString(9, user.getGoogleId());
-                ps.setString(10, user.getProfileImage());
-                ps.setBoolean(11, user.isEmailVerified());
-                ps.setString(12, user.getAuthProvider() != null ? user.getAuthProvider() : "LOCAL");
-            } catch (SQLException e) {
-                // Fallback to legacy insert
-                ps = conn.prepareStatement(legacySql, Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1, user.getName());
-                ps.setString(2, user.getEmail());
-                ps.setString(3, user.getPassword());
-                ps.setString(4, user.getPhone());
-                ps.setString(5, user.getRole() != null ? user.getRole() : "STUDENT");
-                ps.setString(6, user.getDepartment());
-                ps.setString(7, user.getStatus() != null ? user.getStatus() : "ACTIVE");
+            if (statement.executeUpdate() == 0) {
+                throw new SQLException("Creating user failed, no rows affected.");
             }
-
-            try (PreparedStatement statement = ps) {
-                int affectedRows = statement.executeUpdate();
-                if (affectedRows == 0) {
-                    throw new SQLException("Creating user failed, no rows affected.");
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    user.setUserId(generatedKeys.getLong(1));
+                } else {
+                    throw new SQLException("Creating user failed, no ID obtained.");
                 }
-
-                try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        user.setUserId(generatedKeys.getLong(1));
-                    } else {
-                        throw new SQLException("Creating user failed, no ID obtained.");
-                    }
-                }
-                return user;
             }
+            return user;
         }
     }
 
@@ -130,23 +87,6 @@ public class UserDAOImpl implements UserDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, userId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToUser(rs);
-                }
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public User findByGoogleId(String googleId) throws SQLException {
-        if (googleId == null || googleId.isBlank()) return null;
-        String sql = "SELECT * FROM users WHERE google_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, googleId.trim());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapResultSetToUser(rs);
@@ -194,37 +134,6 @@ public class UserDAOImpl implements UserDAO {
             ps.setLong(2, userId);
 
             return ps.executeUpdate() > 0;
-        }
-    }
-
-    @Override
-    public boolean updateGoogleOAuth(Long userId, String googleId, String profileImage) throws SQLException {
-        String sql = "UPDATE users SET google_id = ?, profile_image = ?, auth_provider = 'GOOGLE', email_verified = TRUE WHERE user_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, googleId);
-            ps.setString(2, profileImage);
-            ps.setLong(3, userId);
-
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            return false;
-        }
-    }
-
-    @Override
-    public boolean updateEmailVerified(Long userId, boolean verified) throws SQLException {
-        String sql = "UPDATE users SET email_verified = ? WHERE user_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setBoolean(1, verified);
-            ps.setLong(2, userId);
-
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            return false;
         }
     }
 

@@ -1,7 +1,7 @@
 -- ========================================================
 -- College Lost & Found Management System Database Schema
 -- Database: lost_found_db
--- Compatible with MySQL 8.0+ and H2 MySQL Compatibility Mode
+-- Compatible with MySQL 8.0+
 -- ========================================================
 
 -- 1. USERS TABLE
@@ -18,7 +18,7 @@ DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     user_id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
+    email VARCHAR(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     role VARCHAR(20) NOT NULL DEFAULT 'STUDENT',
