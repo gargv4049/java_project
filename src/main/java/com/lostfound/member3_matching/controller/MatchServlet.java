@@ -15,8 +15,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-
-
 /**
  * Match Controller Servlet.
  * Computes and displays algorithmic match scores for a selected item.

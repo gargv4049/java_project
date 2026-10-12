@@ -18,9 +18,6 @@ public class LevenshteinAlgorithm {
         if (s1 == null) return s2.length();
         if (s2 == null) return s1.length();
 
-
-
-
         int len1 = s1.length();
         int len2 = s2.length();
 
