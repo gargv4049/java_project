@@ -231,9 +231,13 @@ java_project-main/
 
 ---
 
-##UML Design
+UML Design
 1. UML Use-Case Diagram
    <img width="1447" height="853" alt="Screenshot (85)" src="https://github.com/user-attachments/assets/c56b8f36-9c95-4408-87fd-60e7c8bb64a5" />
+2. UML Class Diagram
+   <img width="946" height="1888" alt="IMG_20261012_104137 jpg" src="https://github.com/user-attachments/assets/f79aa0b0-8e1b-43cd-a5db-035ff43b70bb" />
+3. UML Sequence Diagram (Item Claim & Verification Workflow)
+   <img width="1519" height="828" alt="Screenshot (86)" src="https://github.com/user-attachments/assets/086a2588-344e-46cf-8bba-bba25a02f8f6" />
 
 
 
