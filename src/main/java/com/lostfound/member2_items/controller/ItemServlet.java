@@ -4,9 +4,12 @@ import com.lostfound.member1_auth.util.ValidationUtil;
 import com.lostfound.member2_items.service.ItemService;
 import com.lostfound.member2_items.service.ItemServiceImpl;
 import com.lostfound.member2_items.util.ImageUploadUtil;
+import com.lostfound.member4_claims.service.ClaimService;
+import com.lostfound.member4_claims.service.ClaimServiceImpl;
 import com.lostfound.member5_admin.dao.AdminDAO;
 import com.lostfound.member5_admin.dao.AdminDAOImpl;
 import com.lostfound.model.Category;
+import com.lostfound.model.Claim;
 import com.lostfound.model.Item;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -35,6 +38,7 @@ import java.util.List;
 public class ItemServlet extends HttpServlet {
 
     private final ItemService itemService = new ItemServiceImpl();
+    private final ClaimService claimService = new ClaimServiceImpl();
     private final AdminDAO adminDAO = new AdminDAOImpl();
 
     @Override
@@ -48,6 +52,12 @@ public class ItemServlet extends HttpServlet {
             switch (action) {
                 case "view":
                     handleViewItem(request, response);
+                    break;
+                case "report":
+                    ensureLoggedIn(request, response, () -> {
+                        String typeParam = request.getParameter("type");
+                        forwardToReportPage(request, response, "FOUND".equalsIgnoreCase(typeParam) ? "FOUND" : "LOST");
+                    });
                     break;
                 case "report-lost":
                     ensureLoggedIn(request, response, () -> forwardToReportPage(request, response, "LOST"));
@@ -65,8 +75,6 @@ public class ItemServlet extends HttpServlet {
                 default:
                     handleGallery(request, response);
                     break;
-
-                    
             }
         } catch (Exception e) {
             request.setAttribute("error", e.getMessage());
@@ -103,11 +111,8 @@ public class ItemServlet extends HttpServlet {
                 request.setAttribute("categories", itemService.getAllCategories());
             } catch (Exception ignored) {}
             String formType = request.getParameter("itemType");
-            if ("FOUND".equalsIgnoreCase(formType)) {
-                request.getRequestDispatcher("/items/report-found.jsp").forward(request, response);
-            } else {
-                request.getRequestDispatcher("/items/report-lost.jsp").forward(request, response);
-            }
+            request.setAttribute("itemType", "FOUND".equalsIgnoreCase(formType) ? "FOUND" : "LOST");
+            request.getRequestDispatcher("/items/report-item.jsp").forward(request, response);
         }
     }
 
@@ -119,24 +124,26 @@ public class ItemServlet extends HttpServlet {
         }
         Item item = itemService.getItemById(id);
         request.setAttribute("item", item);
+
+        // Load any claims associated with this item
+        try {
+            List<Claim> itemClaims = claimService.getClaimsByItem(item.getItemId());
+            request.setAttribute("itemClaims", itemClaims);
+        } catch (Exception ignored) {}
+
         try {
             String noticeUrl = request.getRequestURL().toString() + "?action=view&id=" + item.getItemId();
             String qrBase64 = com.lostfound.member4_claims.util.QRCodeUtil.generateQRCodeBase64(noticeUrl, 220, 220);
             request.setAttribute("qrBase64", qrBase64);
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
         request.getRequestDispatcher("/items/item-details.jsp").forward(request, response);
     }
 
     private void forwardToReportPage(HttpServletRequest request, HttpServletResponse response, String itemType) throws Exception {
         List<Category> categories = itemService.getAllCategories();
         request.setAttribute("categories", categories);
-        request.setAttribute("itemType", itemType);
-        if ("FOUND".equalsIgnoreCase(itemType)) {
-            request.getRequestDispatcher("/items/report-found.jsp").forward(request, response);
-        } else {
-            request.getRequestDispatcher("/items/report-lost.jsp").forward(request, response);
-        }
+        request.setAttribute("itemType", itemType != null ? itemType.toUpperCase() : "LOST");
+        request.getRequestDispatcher("/items/report-item.jsp").forward(request, response);
     }
 
     private void handleMyItems(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -201,8 +208,8 @@ public class ItemServlet extends HttpServlet {
         try {
             Part filePart = request.getPart("imageFile");
             if (filePart != null && filePart.getSize() > 0) {
-                String uploadRealPath = getServletContext().getRealPath("/uploads/items");
-                imagePath = ImageUploadUtil.saveUploadedImage(filePart, uploadRealPath);
+                imagePath = ImageUploadUtil.saveUploadedImage(
+                        filePart, ImageUploadUtil.getUploadDirectory(getServletContext()));
             }
         } catch (Exception e) {
             throw new IllegalArgumentException("Image upload failed: " + e.getMessage());
@@ -251,8 +258,8 @@ public class ItemServlet extends HttpServlet {
         String imagePath = existingImage;
         Part filePart = request.getPart("imageFile");
         if (filePart != null && filePart.getSize() > 0) {
-            String uploadRealPath = getServletContext().getRealPath("/uploads/items");
-            String newImagePath = ImageUploadUtil.saveUploadedImage(filePart, uploadRealPath);
+            String newImagePath = ImageUploadUtil.saveUploadedImage(
+                    filePart, ImageUploadUtil.getUploadDirectory(getServletContext()));
             if (newImagePath != null) {
                 imagePath = newImagePath;
             }

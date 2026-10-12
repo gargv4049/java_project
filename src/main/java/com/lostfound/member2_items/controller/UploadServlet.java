@@ -60,8 +60,8 @@ public class UploadServlet extends HttpServlet {
                 return;
             }
 
-            String uploadRealPath = getServletContext().getRealPath("/uploads/items");
-            String savedPath = ImageUploadUtil.saveUploadedImage(filePart, uploadRealPath);
+            String savedPath = ImageUploadUtil.saveUploadedImage(
+                    filePart, ImageUploadUtil.getUploadDirectory(getServletContext()));
 
             jsonResponse.put("success", true);
             jsonResponse.put("filePath", savedPath);
