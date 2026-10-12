@@ -149,6 +149,16 @@
                                 <a href="${pageContext.request.contextPath}/claims/verify?claimId=${claim.claimId}" class="btn btn-primary w-100 mb-2">
                                     <i class="bi bi-check-circle me-1"></i> Verify OTP / QR Token
                                 </a>
+                                <c:if test="${isOwner or sessionScope.userRole eq 'ADMIN'}">
+                                    <form action="${pageContext.request.contextPath}/claims" method="post" class="mb-2"
+                                          onsubmit="return confirm('Issue a fresh OTP and QR code for this approved claim?');">
+                                        <input type="hidden" name="action" value="approve">
+                                        <input type="hidden" name="claimId" value="${claim.claimId}">
+                                        <button type="submit" class="btn btn-outline-secondary w-100">
+                                            <i class="bi bi-arrow-repeat me-1"></i> Regenerate OTP / QR
+                                        </button>
+                                    </form>
+                                </c:if>
                             </c:if>
                             <c:if test="${claim.status eq 'VERIFIED'}">
                                 <div class="alert alert-success small mb-3">
@@ -175,7 +185,17 @@
                             <div class="text-muted py-4">
                                 <i class="bi bi-hourglass-split fs-1 text-warning"></i>
                                 <div class="fw-bold mt-2">Pending Owner / Admin Review</div>
-                                <div class="small">Verification OTP and QR code will be generated once approved.</div>
+                                <div class="small mb-3">This is expected while your ownership proof is being reviewed. The OTP and QR code are issued only after approval.</div>
+                                <c:if test="${isClaimant}">
+                                    <a href="${pageContext.request.contextPath}/claims?action=my-claims" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-list-check me-1"></i> Track My Claim
+                                    </a>
+                                </c:if>
+                                <c:if test="${isOwner or sessionScope.userRole eq 'ADMIN'}">
+                                    <a href="${pageContext.request.contextPath}/claims?action=manage" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-inbox me-1"></i> Review Claims on My Items
+                                    </a>
+                                </c:if>
                             </div>
                         </c:otherwise>
                     </c:choose>

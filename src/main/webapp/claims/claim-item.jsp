@@ -17,6 +17,14 @@
                 </div>
                 <div class="card-body p-4">
                     <!-- Item Summary Card -->
+                    <c:if test="${isSelfClaimDemo}">
+                        <div class="alert alert-warning small d-flex align-items-center mb-3">
+                            <i class="bi bi-info-circle-fill me-2 fs-5 text-warning"></i>
+                            <div>
+                                <strong>Single-Account Evaluation Mode:</strong> You reported this item. You can submit this claim to test and demonstrate the complete claim review, OTP/QR verification, and handover process end-to-end!
+                            </div>
+                        </div>
+                    </c:if>
                     <div class="card bg-light border-0 p-3 mb-4">
                         <div class="d-flex align-items-center gap-3">
                             <c:choose>
