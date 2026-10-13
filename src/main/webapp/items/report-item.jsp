@@ -14,14 +14,24 @@
             <!-- Mode Switcher Pill Control -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white p-2">
                 <div class="d-flex align-items-center justify-content-between p-1 bg-light rounded-pill border">
+<<<<<<< HEAD
                     <button type="button"
                             id="btnModeLost"
+=======
+                    <button type="button" 
+                            id="btnModeLost" 
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
                             class="btn flex-fill rounded-pill py-2 fw-bold text-center transition-all ${itemType ne 'FOUND' ? 'btn-danger shadow-sm text-white' : 'btn-light text-secondary'}"
                             onclick="switchReportMode('LOST')">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>I Lost Something (Report Lost)
                     </button>
+<<<<<<< HEAD
                     <button type="button"
                             id="btnModeFound"
+=======
+                    <button type="button" 
+                            id="btnModeFound" 
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
                             class="btn flex-fill rounded-pill py-2 fw-bold text-center transition-all ${itemType eq 'FOUND' ? 'btn-success shadow-sm text-white' : 'btn-light text-secondary'}"
                             onclick="switchReportMode('FOUND')">
                         <i class="bi bi-box2-heart-fill me-2"></i>I Found Something (Report Found)

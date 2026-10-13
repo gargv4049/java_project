@@ -25,7 +25,11 @@ The **Campus Lost & Found Management System** is a complete, production-grade we
 
 | Layer | Technologies |
 |---|---|
+<<<<<<< HEAD
 | **Backend Core** | Java 17+ (Compatible with JDK 25), Jakarta Servlet 6.1, Jakarta JSP 4.0, Jakarta JSTL 3.0 |
+=======
+| **Backend Core** | Java 25, Jakarta Servlet 6.1, Jakarta JSP 4.0, Jakarta JSTL 3.0 |
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 | **Persistence** | JDBC (Java Database Connectivity), MySQL Connector/J 8.4, Raw SQL PreparedStatements |
 | **Security & Hashing** | jBCrypt 0.4 (Blowfish salt rounds = 12), Secure HTTP Session Management |
 | **Algorithms** | Custom Levenshtein Distance (Text), Custom Haversine Formula (GPS Proximity) |
@@ -316,10 +320,17 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 3. Navigate to `c:\Users\gargv\Desktop\CampusLostFoundPortal` and select the directory (or select `pom.xml`).
 4. Click **Open as Project**.
 
+<<<<<<< HEAD
 ### 2. Verify Project SDK (JDK 25 / Java 17+)
 1. Go to **File &rarr; Project Structure &rarr; Project**.
 2. Set **SDK** to **JDK 25** (or installed JDK 17+ / 21+).
 3. Set **Language Level** to **17 - Sealed types, pattern matching** (or SDK default).
+=======
+### 2. Verify Project SDK (JDK 25)
+1. Go to **File &rarr; Project Structure &rarr; Project**.
+2. Set **SDK** to **JDK 25**.
+3. Set **Language Level** to **25** (or SDK default).
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 4. Click **Apply &rarr; OK**.
 
 ### 3. Configure Apache Tomcat 11 Local Server
@@ -405,3 +416,7 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 
 ## 📄 License & Academic Attribution
 Developed for university and college property recovery systems. Free to use and extend for academic projects, institutional operations, and portfolio demonstrations.
+<<<<<<< HEAD
+=======
+#
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)

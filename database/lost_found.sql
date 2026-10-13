@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 -- ========================================================
 -- College Lost & Found Management System Database Schema
 -- Database: lost_found_db
@@ -204,3 +205,13 @@ INSERT INTO audit_logs (user_id, action, ip_address) VALUES
 -- Seed Sample Report (Flagged Item)
 INSERT INTO reports (reported_by, item_id, reason, description, status) VALUES
 (4, 5, 'Duplicate Listing', 'This bike keys listing looks duplicated from yesterday post.', 'OPEN');
+=======
+-- Run this PostgreSQL setup script with psql after creating lost_found_db:
+--   createdb -U postgres lost_found_db
+--   psql -U postgres -d lost_found_db -f .\database\lost_found.sql
+-- The schema and development seed data are maintained in one canonical file.
+\set ON_ERROR_STOP on
+BEGIN;
+\ir ../src/main/resources/schema.sql
+COMMIT;
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)

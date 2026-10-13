@@ -7,7 +7,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+<<<<<<< HEAD
  * MySQL JDBC connection manager with automatic table bootstrapping.
+=======
+ * PostgreSQL JDBC connection manager with automatic table bootstrapping.
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
  */
 public class DatabaseConnection {
 
@@ -15,10 +19,17 @@ public class DatabaseConnection {
 
     static {
         try {
+<<<<<<< HEAD
             Class.forName("com.mysql.cj.jdbc.Driver");
             LOGGER.info("MySQL JDBC Driver registered.");
         } catch (ClassNotFoundException e) {
             LOGGER.warning("MySQL driver not found in classpath.");
+=======
+            Class.forName("org.postgresql.Driver");
+            LOGGER.info("PostgreSQL JDBC Driver registered.");
+        } catch (ClassNotFoundException e) {
+            throw new ExceptionInInitializerError(e);
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
         }
     }
 
@@ -27,7 +38,11 @@ public class DatabaseConnection {
     }
 
     /**
+<<<<<<< HEAD
      * Opens the configured MySQL database. Credentials must be supplied outside source control.
+=======
+     * Opens the configured PostgreSQL database. Credentials must be supplied outside source control.
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
      */
     public static Connection getConnection() throws SQLException {
         String url = AppConfig.getDbUrl();
@@ -37,6 +52,7 @@ public class DatabaseConnection {
             throw new SQLException("Database credentials are not configured. Set DB_USERNAME and DB_PASSWORD outside the project.");
         }
 
+<<<<<<< HEAD
         try {
             Connection conn = DriverManager.getConnection(url, username, password);
             try {
@@ -73,6 +89,15 @@ public class DatabaseConnection {
 
             LOGGER.log(Level.SEVERE, "Unable to connect to the configured MySQL database.", e);
             throw e;
+=======
+        Connection conn = DriverManager.getConnection(url, username, password);
+        try {
+            DatabaseInitializer.initializeIfNeeded(conn);
+            return conn;
+        } catch (RuntimeException e) {
+            closeQuietly(conn);
+            throw new SQLException("Could not initialize the configured PostgreSQL database.", e);
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
         }
     }
 

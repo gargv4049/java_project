@@ -108,7 +108,11 @@ public class AppConfig {
     }
 
     public static String getDbUrl() {
+<<<<<<< HEAD
         return getProperty("db.url", getProperty("DB_URL", "jdbc:mysql://localhost:3306/lost_found_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata&characterEncoding=UTF-8"));
+=======
+        return getProperty("db.url", getProperty("DB_URL", "jdbc:postgresql://localhost:5432/lost_found_db"));
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
     }
 
     public static String getDbUsername() {

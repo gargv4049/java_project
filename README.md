@@ -1,7 +1,11 @@
 # Campus Lost & Found Management System
 
 > **Enterprise-Grade Java Web Application for University & College Campuses**  
+<<<<<<< HEAD
 > Built with Java Servlets (Jakarta EE), JSP, JDBC, MySQL 8+, Bootstrap 5, Apache PDFBox, and ZXing.
+=======
+> Built with Java Servlets (Jakarta EE), JSP, JDBC, PostgreSQL, Bootstrap 5, Apache PDFBox, and ZXing.
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 > Directly importable and runnable in **IntelliJ IDEA**, **JDK 25**, and **Apache Tomcat 11**.
 
 ---
@@ -18,7 +22,11 @@ The **Campus Lost & Found Management System** is a complete, production-grade we
 - **ACID Transactional Handover**: Item status transitions (`ACTIVE` &rarr; `CLAIMED` &rarr; `RETURNED`) execute inside atomic database transactions (`setAutoCommit(false)` with rollback protection).
 - **Executive Administration & PDF Reporting**: Dynamic analytics dashboard with live Chart.js graphs, user role management, content moderation flags, unclaimed property disposal tracker, and automated downloadable PDF reports via Apache PDFBox.
 - **Security Controls**: BCrypt password hashing (cost factor 12), parameterized `PreparedStatement` queries, session invalidation on logout, role/ownership checks, and allowlisted file-upload types.
+<<<<<<< HEAD
 - **Database Authentication**: Accounts register with a unique username or email identifier and BCrypt password; sign-in and password changes use MySQL only. No external sign-in or email verification is required.
+=======
+- **Database Authentication**: Accounts register with a unique username or email identifier and BCrypt password; sign-in and password changes use PostgreSQL only. No external sign-in or email verification is required.
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 
 ## 🗓️ 12-Week Project Work Plan
 
@@ -27,7 +35,11 @@ This is a suggested week-by-week development and academic reporting plan for the
 | Week | Planned work | Deliverable / review point |
 |---|---|---|
 | 1 | Define the campus lost-and-found problem, users, goals, scope, and functional requirements. | Requirements and initial use cases for students, faculty, and administrators. |
+<<<<<<< HEAD
 | 2 | Design the application architecture, database entities, relationships, and development environment. | MVC/service/DAO design, MySQL schema review, and a reproducible local build setup. |
+=======
+| 2 | Design the application architecture, database entities, relationships, and development environment. | MVC/service/DAO design, PostgreSQL schema review, and a reproducible local build setup. |
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 | 3 | Implement account registration, login/logout, profile management, password hashing, and protected-route behavior. | Database-backed authentication and role-aware sessions. |
 | 4 | Implement lost/found item reporting, editing, ownership checks, image uploads, and the item gallery. | Item lifecycle flows with validated metadata and safe image storage. |
 | 5 | Add keyword, category, and location search and gallery filtering. | Search and filter flows returning relevant active listings. |
@@ -42,6 +54,7 @@ This is a suggested week-by-week development and academic reporting plan for the
 Use the **Comprehensive Testing Checklist** section to record the checks actually run. Mark an item complete only after verifying it; do not treat this proposed timeline as a test report.
 
 ---
+<<<<<<< HEAD
 Database Design & UI Mock-ups
 1. Database Design (Schema & Architecture)
    The database for the application is designed to handle user management, item reporting, spatial/textual matching, secure claims, and administrative auditing. Based on the model classes (User, Item, Category, Claim, MatchResult, HandoverRecord, Notification, AuditLog) and configuration files (db.properties, lost_found.sql) found in your project, the relational database schema is structured as follows:
@@ -66,20 +79,31 @@ Core Database Tables
 2. Database Design (ER Schema) Diagram
    <img width="819" height="1714" alt="IMG_20261012_101835 jpg" src="https://github.com/user-attachments/assets/72dd1968-57b2-449c-91d3-7a2b4bef3ed3" />
 
+=======
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 
 ## 🛠️ Technology Stack
 
 | Layer | Technologies |
 |---|---|
+<<<<<<< HEAD
 | **Backend Core** | Java 17+ (Compatible with JDK 25), Jakarta Servlet 6.1, Jakarta JSP 4.0, Jakarta JSTL 3.0 |
 | **Persistence** | JDBC (Java Database Connectivity), MySQL Connector/J 8.4, Raw SQL PreparedStatements |
+=======
+| **Backend Core** | Java 25, Jakarta Servlet 6.1, Jakarta JSP 4.0, Jakarta JSTL 3.0 |
+| **Persistence** | JDBC (Java Database Connectivity), PostgreSQL JDBC Driver 42.7, Raw SQL PreparedStatements |
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 | **Security & Hashing** | jBCrypt 0.4 (Blowfish salt rounds = 12), Secure HTTP Session Management |
 | **Algorithms** | Custom Levenshtein Distance (Text), Custom Haversine Formula (GPS Proximity) |
 | **Third-Party Libraries** | ZXing 3.5.3 (QR Code Generation), Apache PDFBox 3.0.4 (PDF Engine), Gson 2.11.0 |
 | **Frontend UI** | JSP, HTML5, CSS3, JavaScript (ES6), Bootstrap 5.3.3, Bootstrap Icons, Chart.js 4.4 |
 | **Build Tool & Packaging** | Apache Maven 3.10+, WAR (Web Application Archive) |
 | **Runtime Server** | Apache Tomcat 11.0.x (Jakarta EE 10/11) |
+<<<<<<< HEAD
 | **Database** | MySQL Server 8.0+ |
+=======
+| **Database** | PostgreSQL 14+ |
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 
 ---
 
@@ -255,6 +279,7 @@ java_project-main/
 
 ---
 
+<<<<<<< HEAD
 UML Design
 1. UML Use-Case Diagram
    <img width="1447" height="853" alt="Screenshot (85)" src="https://github.com/user-attachments/assets/c56b8f36-9c95-4408-87fd-60e7c8bb64a5" />
@@ -269,6 +294,12 @@ UML Design
 
 - Registration asks for a full name, unique username/email identifier, password, and confirmation. The identifier is stored in the existing unique `users.email` column for compatibility with the rest of the application; it is normalized to lowercase and is not verified or used for email.
 - Passwords are stored only as BCrypt hashes (cost 12). Login checks the identifier and password against MySQL. Unauthenticated requests to protected application routes are redirected to sign in; login invalidates any prior session before establishing a fresh one, and logout invalidates it.
+=======
+## 🔐 Authentication and password recovery
+
+- Registration asks for a full name, unique username/email identifier, password, and confirmation. The identifier is stored in the existing unique `users.email` column for compatibility with the rest of the application; it is normalized to lowercase and is not verified or used for email.
+- Passwords are stored only as BCrypt hashes (cost 12). Login checks the identifier and password against PostgreSQL. Unauthenticated requests to protected application routes are redirected to sign in; login invalidates any prior session before establishing a fresh one, and logout invalidates it.
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 - Signed-in users change passwords at **Change Password**; their current password is required.
 - There is no public password-reset endpoint. If a user is locked out, an administrator verifies the person's identity in person, generates a strong one-time temporary password, hashes it with the application's BCrypt utility, and updates only that account through a restricted database administrator account. The temporary password is provided privately and the user immediately signs in and changes it using the normal current-password-required flow. Do not email passwords or perform resets based only on an online request.
 
@@ -318,6 +349,7 @@ $$\text{Total Score} = (\text{Text Score} \times 0.40) + (\text{Location Score} 
 
 ---
 
+<<<<<<< HEAD
 ## 🗄️ Database Setup (MySQL 8+)
 
 ### Step 1: Open MySQL Command Line or MySQL Workbench
@@ -336,6 +368,25 @@ The script creates `lost_found_db`, but it also drops and recreates the applicat
 
 ### Step 3: Configure Database Credentials
 Keep database credentials out of source files. Set `DB_USERNAME` and `DB_PASSWORD` in the Tomcat process environment. Alternatively, keep them in a local `.env` file and copy that file to Tomcat's `CATALINA_BASE` as `.env`; the application checks that location. A `.env` file in the project directory may not be found when Tomcat is launched from another directory. Never commit a real `.env` file or put production credentials in `src/main/resources/db.properties`.
+=======
+## 🗄️ Database Setup (PostgreSQL 14+)
+
+Install PostgreSQL and ensure its `bin` directory is on `PATH`. Create the application database (PowerShell):
+
+```powershell
+createdb -U postgres lost_found_db
+```
+
+The application initializes its tables and development seed data automatically the first time it connects to an empty database. To initialize it manually instead, run the psql script from the repository root:
+
+```powershell
+psql -U postgres -d lost_found_db -f .\database\lost_found.sql
+```
+
+`database/lost_found.sql` includes the canonical schema in `src/main/resources/schema.sql`. It is intended for a new, empty database and does not drop existing tables or data. Do not run it against an already initialized database. The seed includes demo accounts; change their credentials before using a public deployment.
+
+Set `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` in the Tomcat process environment. The default URL is `jdbc:postgresql://localhost:5432/lost_found_db`; use the database host and SSL parameters required by your provider for remote deployments. Alternatively, keep credentials in a local `.env` file and place it in Tomcat's `CATALINA_BASE`; never commit a real `.env` file or production credentials to `src/main/resources/db.properties`.
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 
 ## 🔨 Maven Build Commands
 
@@ -352,14 +403,61 @@ target/LostFoundManagementSystem.war
 
 ---
 
+<<<<<<< HEAD
 ## 💻 PowerShell deployment to Tomcat 11
 
 Use a dedicated MySQL account rather than root when possible. This example prompts for the password without writing it to a project file, copies the WAR, and starts Tomcat in the foreground:
+=======
+## 🐳 Docker deployment
+
+Build the image from the project root:
+
+```powershell
+docker build -t campus-lost-found .
+```
+
+Run it with the database settings supplied at runtime. Set `DB_URL` to a
+PostgreSQL host reachable from the container (not `localhost` when PostgreSQL
+is running on the host or in another container). For local development, copy
+`.env.example` to `.env`, set `DB_URL` to the reachable PostgreSQL host (for
+example, `host.docker.internal` when PostgreSQL runs on Windows), and enter
+your database credentials. Keep `.env` out of source control:
+
+```powershell
+Copy-Item .env.example .env
+# Edit .env and set DB_URL, DB_USERNAME, and DB_PASSWORD before running.
+docker run --name campus-lost-found `
+  -p 10000:10000 `
+  -e PORT=10000 `
+  --env-file .env `
+  -v lostfound-uploads:/usr/local/tomcat/uploads/items `
+  campus-lost-found
+```
+
+The named volume preserves uploaded item images when the container is
+replaced. The application is available at `http://localhost:10000/`. For
+hosting platforms, set `PORT` to the provided port and set `DB_URL`,
+`DB_USERNAME`, and `DB_PASSWORD` as runtime environment variables.
+
+`.dockerignore` excludes local environment files and
+`src/main/resources/db.properties` from the Docker build context so local
+credentials are not copied into the image.
+
+---
+
+## 💻 PowerShell deployment to Tomcat 11
+
+Use a dedicated PostgreSQL account rather than a superuser when possible. This example prompts for the password without writing it to a project file, copies the WAR, and starts Tomcat in the foreground:
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 
 ```powershell
 $env:CATALINA_HOME = 'C:\apache-tomcat-11.0.x'
 $env:DB_USERNAME = 'lostfound_app'
+<<<<<<< HEAD
 $securePassword = Read-Host 'MySQL password' -AsSecureString
+=======
+$securePassword = Read-Host 'PostgreSQL password' -AsSecureString
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 $passwordPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
 try {
     $env:DB_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer)
@@ -386,10 +484,17 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 3. Navigate to the project directory containing `pom.xml` and select it (or select `pom.xml` directly).
 4. Click **Open as Project**.
 
+<<<<<<< HEAD
 ### 2. Verify Project SDK (JDK 25 / Java 17+)
 1. Go to **File &rarr; Project Structure &rarr; Project**.
 2. Set **SDK** to **JDK 25** (or installed JDK 17+ / 21+).
 3. Set **Language Level** to **17 - Sealed types, pattern matching** (or SDK default).
+=======
+### 2. Verify Project SDK (JDK 25)
+1. Go to **File &rarr; Project Structure &rarr; Project**.
+2. Set **SDK** to **JDK 25**.
+3. Set **Language Level** to **25** (or SDK default).
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 4. Click **Apply &rarr; OK**.
 
 ### 3. Configure Apache Tomcat 11 Local Server
@@ -464,8 +569,13 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 | Issue / Error | Cause | Resolution |
 |---|---|---|
 | **Database credential error** | `DB_USERNAME` or `DB_PASSWORD` is not set in the Tomcat process environment, or credentials are invalid. | Set both environment variables before starting Tomcat; keep credentials out of the repository. |
+<<<<<<< HEAD
 | **`Unknown database 'lost_found_db'`** | Database script not executed yet. | Execute `database/lost_found.sql` using MySQL CLI or Workbench. |
 | **`java.lang.ClassNotFoundException: com.mysql.cj.jdbc.Driver`** | MySQL JDBC Driver missing from classpath. | Run `mvn clean package` or ensure `mysql-connector-j` is included in Tomcat server libraries. |
+=======
+| **Database does not exist** | PostgreSQL database has not been created yet. | Run `createdb -U postgres lost_found_db`, then restart the application; it initializes an empty database on first connection. |
+| **`java.lang.ClassNotFoundException: org.postgresql.Driver`** | PostgreSQL JDBC Driver missing from the WAR. | Run `mvn clean package` and deploy the newly generated WAR. |
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
 | **`404 Not Found` when opening application** | Application context path mismatch. | In Tomcat configuration &rarr; Deployment &rarr; set Application context strictly to `/LostFoundManagementSystem`. |
 | **`500 - java.lang.NoClassDefFoundError: jakarta/servlet/...`** | Older Tomcat version (Tomcat 9 or 8) used. | Apache Tomcat 11 is required for Jakarta EE 11 / Servlet 6.1 specification. |
 | **`File upload size exceeds limit`** | Uploaded image $> 5 \text{ MB}$. | Choose an image file smaller than 5 MB or compress the picture before upload. |
@@ -482,4 +592,8 @@ Developed for university and college property recovery systems. Free to use and 
 - Update the architecture, dependencies, database steps, and deployment instructions whenever the corresponding code or configuration changes.
 - Keep the 12-week plan as a planning outline unless actual dated progress records are available.
 - Mark testing checklist entries as complete only after a test has been run and verified; update troubleshooting entries when a root cause or fix changes.
+<<<<<<< HEAD
 - Before publishing, check links, command paths, Tomcat context names, and Maven artifact names against the current project.
+=======
+- Before publishing, check links, command paths, Tomcat context names, and Maven artifact names against the current project.
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
