@@ -38,7 +38,11 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     </c:if>
+<<<<<<< HEAD
 
+=======
+                    
+>>>>>>> 67eb56a (Convert application database to PostgreSQL)
                     <!-- Info Alert -->
                     <c:if test="${not empty info}">
                         <div class="alert alert-info alert-dismissible fade show d-flex align-items-center mb-4" role="alert">

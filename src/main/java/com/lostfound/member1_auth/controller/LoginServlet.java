@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Login Controller Servlet.
@@ -21,6 +23,7 @@ import java.io.IOException;
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login", "/api/login"})
 public class LoginServlet extends HttpServlet {
 
+    private static final Logger LOGGER = Logger.getLogger(LoginServlet.class.getName());
     private final UserService userService = new UserServiceImpl();
     private final AdminDAO adminDAO = new AdminDAOImpl();
 
@@ -36,11 +39,14 @@ public class LoginServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String email = request.getParameter("email");
+        String identifier = request.getParameter("identifier");
+        if (identifier == null) {
+            identifier = request.getParameter("email");
+        }
         String password = request.getParameter("password");
 
         try {
-            User user = userService.login(email, password);
+            User user = userService.login(identifier, password);
 
             // Invalidate old session to prevent session fixation
             HttpSession oldSession = request.getSession(false);
@@ -69,8 +75,13 @@ public class LoginServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            request.setAttribute("error", e.getMessage());
-            request.setAttribute("email", email);
+            if (!(e instanceof IllegalArgumentException)) {
+                LOGGER.log(Level.SEVERE, "Login failed due to a server error.", e);
+            }
+            request.setAttribute("error", e instanceof IllegalArgumentException
+                    ? "Invalid username/email or password."
+                    : "Unable to sign in right now. Please try again.");
+            request.setAttribute("identifier", identifier);
             request.getRequestDispatcher("/login.jsp").forward(request, response);
         }
     }

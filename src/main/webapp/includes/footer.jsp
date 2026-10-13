@@ -33,7 +33,7 @@
             <div class="col-lg-4 col-md-6">
                 <h6 class="fw-bold text-dark mb-3">Security &amp; Verification</h6>
                 <p class="small text-muted mb-2">
-                    All handovers are verified with 6-digit Time-based OTPs, Google ZXing QR tokens, and recorded in persistent database audit trails.
+                    All handovers are verified with 6-digit time-based OTPs, QR tokens, and recorded in persistent database audit trails.
                 </p>
                 <div class="d-flex gap-2">
                     <span class="badge bg-light text-secondary border">BCrypt Secured</span>

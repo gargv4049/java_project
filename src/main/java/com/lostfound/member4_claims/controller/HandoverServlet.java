@@ -48,6 +48,16 @@ public class HandoverServlet extends HttpServlet {
             Claim claim = claimService.getClaimById(claimId);
             Item item = itemService.getItemById(claim.getItemId());
 
+            if (!canAccessClaim(claim, item, session)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have permission to complete this handover.");
+                return;
+            }
+            if (!"VERIFIED".equalsIgnoreCase(claim.getStatus())) {
+                session.setAttribute("flashInfo", "Verify this claim with its OTP or QR token before completing handover.");
+                response.sendRedirect(request.getContextPath() + "/claims?action=details&id=" + claimId);
+                return;
+            }
+
             request.setAttribute("claim", claim);
             request.setAttribute("item", item);
             request.getRequestDispatcher("/claims/handover.jsp").forward(request, response);
@@ -77,6 +87,13 @@ public class HandoverServlet extends HttpServlet {
         }
 
         try {
+            Claim claim = claimService.getClaimById(claimId);
+            Item item = itemService.getItemById(claim.getItemId());
+            if (!canAccessClaim(claim, item, session)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have permission to complete this handover.");
+                return;
+            }
+
             boolean done = claimService.completeHandover(claimId, userId, verificationMethod, remarks);
             if (done) {
                 adminDAO.logAudit(userId, "HANDOVER_TRANSACTION_COMPLETE: Claim #" + claimId, request.getRemoteAddr());
@@ -90,5 +107,13 @@ public class HandoverServlet extends HttpServlet {
             request.setAttribute("error", e.getMessage());
             doGet(request, response);
         }
+    }
+
+    private boolean canAccessClaim(Claim claim, Item item, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        String role = (String) session.getAttribute("userRole");
+        return item != null && ("ADMIN".equalsIgnoreCase(role)
+                || claim.getClaimantId().equals(userId)
+                || item.getUserId().equals(userId));
     }
 }

@@ -16,7 +16,6 @@
         <session-timeout>30</session-timeout>
         <cookie-config>
             <http-only>true</http-only>
-            <secure>false</secure>
         </cookie-config>
         <tracking-mode>COOKIE</tracking-mode>
     </session-config>
@@ -42,26 +41,5 @@
         <error-code>500</error-code>
         <location>/error/500.jsp</location>
     </error-page>
-
-    <!-- Authentication & Security Servlets -->
-    <servlet>
-        <servlet-name>OtpAuthServlet</servlet-name>
-        <servlet-class>com.lostfound.member1_auth.controller.OtpAuthServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>OtpAuthServlet</servlet-name>
-        <url-pattern>/auth/otp</url-pattern>
-        <url-pattern>/api/auth/otp</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>ForgotPasswordServlet</servlet-name>
-        <servlet-class>com.lostfound.member1_auth.controller.ForgotPasswordServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>ForgotPasswordServlet</servlet-name>
-        <url-pattern>/forgot-password</url-pattern>
-        <url-pattern>/api/forgot-password</url-pattern>
-    </servlet-mapping>
 
 </web-app>

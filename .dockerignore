@@ -1,0 +1,10 @@
+.git
+.idea
+.vscode
+target
+bin
+*.iml
+.env
+.env.*
+!.env.example
+src/main/resources/db.properties

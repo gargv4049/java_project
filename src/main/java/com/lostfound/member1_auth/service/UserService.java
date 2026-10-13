@@ -35,29 +35,4 @@ public interface UserService {
      */
     boolean changePassword(Long userId, String currentPassword, String newPassword, String confirmPassword) throws Exception;
 
-    /**
-     * Authenticates or automatically registers a user via Google / Gmail Free Auth API.
-     */
-    User loginOrRegisterWithGoogle(String email, String name, String pictureUrl) throws Exception;
-
-    /**
-     * Generates and dispatches a 6-digit OTP for passwordless login via email.
-     */
-    String sendLoginOtp(String email) throws Exception;
-
-    /**
-     * Authenticates or auto-registers a user using a verified 6-digit email OTP.
-     */
-    User loginWithOtp(String email, String otp) throws Exception;
-
-    /**
-     * Generates and dispatches a 6-digit recovery OTP for forgot password workflow.
-     */
-    String sendForgotPasswordOtp(String email) throws Exception;
-
-    /**
-     * Verifies recovery OTP and resets user's password.
-     */
-    boolean resetPasswordWithOtp(String email, String otp, String newPassword, String confirmPassword) throws Exception;
 }
-

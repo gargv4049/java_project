@@ -15,7 +15,7 @@
         </div>
 
         <form action="${pageContext.request.contextPath}/admin/users" method="get" class="d-flex gap-2">
-            <input type="text" name="keyword" class="form-control form-control-sm" placeholder="Search name, email..." value="${keyword}">
+            <input type="text" name="keyword" class="form-control form-control-sm" placeholder="Search name, username/email..." value="${keyword}">
             <button type="submit" class="btn btn-primary btn-sm px-3">
                 <i class="bi bi-search"></i>
             </button>
@@ -33,7 +33,7 @@
                         <tr>
                             <th class="ps-3">User ID</th>
                             <th>Name</th>
-                            <th>Email</th>
+                            <th>Username / Email</th>
                             <th>Department</th>
                             <th>Phone</th>
                             <th>Role</th>

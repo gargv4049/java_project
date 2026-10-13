@@ -82,7 +82,9 @@
 
                             <div class="col-md-12">
                                 <label for="imageFileInput" class="form-label">Replace Photo (Optional, Max 5MB)</label>
-                                <input type="file" class="form-control" id="imageFileInput" name="imageFile" accept="image/jpeg,image/png,image/webp">
+                                <input type="file" class="form-control" id="imageFileInput" name="imageFile"
+                                       accept=".jpg,.jpeg,.jfif,.png,.webp,image/jpeg,image/jfif,image/png,image/webp">
+                                <div class="form-text">Accepted formats: JPG, JPEG, JFIF, PNG, WEBP (Max 5MB).</div>
                                 <c:if test="${not empty item.image}">
                                     <div class="mt-2 small text-muted">
                                         Current photo: <a href="${pageContext.request.contextPath}/${item.image}" target="_blank">${item.image}</a>

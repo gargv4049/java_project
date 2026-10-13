@@ -182,7 +182,8 @@ public class ClaimDAOImpl implements ClaimDAO {
 
     @Override
     public boolean approve(Long claimId, String otp, Timestamp otpExpiry, String qrToken) throws SQLException {
-        String sql = "UPDATE claims SET status = 'APPROVED', otp = ?, otp_expiry = ?, qr_token = ? WHERE claim_id = ?";
+        String sql = "UPDATE claims SET status = 'APPROVED', otp = ?, otp_expiry = ?, qr_token = ? " +
+                     "WHERE claim_id = ? AND status IN ('PENDING', 'APPROVED')";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 

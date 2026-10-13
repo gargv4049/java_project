@@ -18,6 +18,8 @@ public interface ClaimService {
 
     List<Claim> getClaimsByUser(Long userId) throws Exception;
 
+    List<Claim> getClaimsByItem(Long itemId) throws Exception;
+
     List<Claim> getClaimsForUserItems(Long ownerId) throws Exception;
 
     List<Claim> getPendingClaims() throws Exception;

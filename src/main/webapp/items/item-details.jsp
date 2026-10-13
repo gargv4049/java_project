@@ -106,12 +106,17 @@
                             <i class="bi bi-cpu me-1"></i> Run Algorithm Match
                         </a>
 
-                        <!-- Claim button (If FOUND and user is not reporter and status is ACTIVE) -->
+                        <!-- Claim button (If FOUND and status is ACTIVE) -->
                         <c:if test="${item.itemType eq 'FOUND' and item.status eq 'ACTIVE'}">
                             <c:choose>
                                 <c:when test="${not empty sessionScope.userId and sessionScope.userId ne item.userId}">
                                     <a href="${pageContext.request.contextPath}/claims?action=create&itemId=${item.itemId}" class="btn btn-success">
                                         <i class="bi bi-hand-index-thumb me-1"></i> Claim This Item
+                                    </a>
+                                </c:when>
+                                <c:when test="${not empty sessionScope.userId and sessionScope.userId eq item.userId}">
+                                    <a href="${pageContext.request.contextPath}/claims?action=create&itemId=${item.itemId}" class="btn btn-outline-success">
+                                        <i class="bi bi-hand-index-thumb me-1"></i> Claim This Item (Test/Demo)
                                     </a>
                                 </c:when>
                                 <c:when test="${empty sessionScope.userId}">
@@ -152,6 +157,75 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Active Claims & Handover Queue (for FOUND items) -->
+            <c:if test="${item.itemType eq 'FOUND'}">
+                <div class="card shadow-sm border-0 mt-4 rounded-3 overflow-hidden">
+                    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                        <h6 class="fw-bold mb-0 text-dark">
+                            <i class="bi bi-hand-index-thumb text-success me-2"></i>Claims &amp; Handover Queue
+                        </h6>
+                        <c:if test="${not empty itemClaims}">
+                            <span class="badge bg-success-subtle text-success">${itemClaims.size()} Claim(s)</span>
+                        </c:if>
+                    </div>
+                    <div class="card-body p-3 p-md-4">
+                        <c:choose>
+                            <c:when test="${not empty itemClaims}">
+                                <div class="list-group list-group-flush gap-2">
+                                    <c:forEach var="cl" items="${itemClaims}">
+                                        <div class="list-group-item border rounded-3 p-3 bg-light">
+                                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                                <div>
+                                                    <span class="fw-bold text-dark">Claim #${cl.claimId}</span>
+                                                    <span class="text-muted small ms-2">&bull; Filed by <strong>${cl.claimantName}</strong> on ${cl.createdAt}</span>
+                                                </div>
+                                                <span class="badge ${cl.status eq 'APPROVED' ? 'badge-approved' : (cl.status eq 'COMPLETED' ? 'badge-returned' : (cl.status eq 'VERIFIED' ? 'badge-matched' : (cl.status eq 'REJECTED' ? 'badge-rejected' : 'badge-pending')))} px-3 py-2">
+                                                    ${cl.status}
+                                                </span>
+                                            </div>
+                                            <p class="small text-secondary mb-2"><strong>Reason:</strong> ${cl.reason}</p>
+                                            <c:if test="${(sessionScope.userRole eq 'ADMIN') or (not empty sessionScope.userId and sessionScope.userId eq item.userId)}">
+                                                <div class="small text-muted bg-white p-2 rounded border mb-2">
+                                                    <strong>Proof Provided:</strong> ${cl.proofDescription}
+                                                </div>
+                                            </c:if>
+                                            <div class="d-flex flex-wrap gap-2 align-items-center pt-2 border-top">
+                                                <a href="${pageContext.request.contextPath}/claims?action=details&id=${cl.claimId}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye me-1"></i> View Claim Details
+                                                </a>
+                                                <c:if test="${cl.status eq 'APPROVED'}">
+                                                    <a href="${pageContext.request.contextPath}/claims/verify?claimId=${cl.claimId}" class="btn btn-sm btn-primary">
+                                                        <i class="bi bi-shield-check me-1"></i> Verify OTP / QR Token
+                                                    </a>
+                                                </c:if>
+                                                <c:if test="${cl.status eq 'VERIFIED'}">
+                                                    <a href="${pageContext.request.contextPath}/claims/handover?claimId=${cl.claimId}" class="btn btn-sm btn-success">
+                                                        <i class="bi bi-hand-thumbs-up me-1"></i> Finalize Handover
+                                                    </a>
+                                                </c:if>
+                                            </div>
+                                        </div>
+                                    </c:forEach>
+                                </div>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="text-center py-3 text-muted">
+                                    <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+                                    <div>No ownership claims have been submitted for this found item yet.</div>
+                                    <c:if test="${item.status eq 'ACTIVE'}">
+                                        <div class="mt-2">
+                                            <a href="${pageContext.request.contextPath}/claims?action=create&itemId=${item.itemId}" class="btn btn-sm btn-success">
+                                                <i class="bi bi-hand-index-thumb me-1"></i> File Claim for this Item
+                                            </a>
+                                        </div>
+                                    </c:if>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </c:if>
         </div>
     </div>
 

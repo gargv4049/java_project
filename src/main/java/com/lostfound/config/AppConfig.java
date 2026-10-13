@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.net.URI;
+import java.net.URLDecoder;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -108,15 +110,93 @@ public class AppConfig {
     }
 
     public static String getDbUrl() {
-        return getProperty("db.url", getProperty("DB_URL", "jdbc:mysql://localhost:3306/lost_found_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata&characterEncoding=UTF-8"));
+        String databaseUrl = getProperty("DATABASE_URL", "");
+        if (!databaseUrl.isBlank()) {
+            return toJdbcUrl(databaseUrl);
+        }
+
+        String host = getProperty("DB_HOST", "");
+        if (!host.isBlank()) {
+            String port = getProperty("DB_PORT", "5432");
+            String database = getProperty("DB_NAME", getProperty("DB_DATABASE", "lost_found_db"));
+            String sslMode = getProperty("DB_SSLMODE", "prefer");
+            return "jdbc:postgresql://" + host + ":" + port + "/" + database + "?sslmode=" + sslMode;
+        }
+
+        String configuredUrl = getProperty("DB_URL", getProperty("db.url", "jdbc:postgresql://localhost:5432/lost_found_db"));
+        return toJdbcUrl(configuredUrl);
     }
 
     public static String getDbUsername() {
-        return getProperty("db.username", getProperty("DB_USERNAME", "root"));
+        String configuredUsername = firstNonBlank(
+                getProperty("DB_USER", ""),
+                getProperty("DB_USERNAME", ""),
+                databaseUrlCredential(true),
+                getProperty("db.username", ""));
+        return configuredUsername;
     }
 
     public static String getDbPassword() {
-        return getProperty("db.password", getProperty("DB_PASSWORD", "New@123"));
+        return firstNonBlank(
+                getProperty("DB_PASSWORD", ""),
+                databaseUrlCredential(false),
+                getProperty("db.password", ""));
+    }
+
+    private static String toJdbcUrl(String configuredUrl) {
+        if (configuredUrl.startsWith("jdbc:postgresql:")) {
+            return configuredUrl;
+        }
+        if (!configuredUrl.startsWith("postgres://") && !configuredUrl.startsWith("postgresql://")) {
+            throw new IllegalArgumentException("Database URL must use jdbc:postgresql:, postgres://, or postgresql://.");
+        }
+
+        URI uri = parseDatabaseUri(configuredUrl);
+        String database = uri.getRawPath();
+        if (uri.getHost() == null || database == null || database.length() < 2) {
+            throw new IllegalArgumentException("DATABASE_URL must include a database host and database name.");
+        }
+
+        String query = uri.getRawQuery();
+        if (query == null || !query.toLowerCase().contains("sslmode=")) {
+            query = (query == null || query.isBlank() ? "" : query + "&") + "sslmode=require";
+        }
+        return "jdbc:postgresql://" + uri.getHost() + (uri.getPort() < 0 ? "" : ":" + uri.getPort())
+                + database + (query.isBlank() ? "" : "?" + query);
+    }
+
+    private static String databaseUrlCredential(boolean username) {
+        String databaseUrl = getProperty("DATABASE_URL", "");
+        if (databaseUrl.isBlank() || databaseUrl.startsWith("jdbc:")) {
+            return "";
+        }
+
+        String userInfo = parseDatabaseUri(databaseUrl).getRawUserInfo();
+        if (userInfo == null) {
+            return "";
+        }
+        int separator = userInfo.indexOf(':');
+        String value = username
+                ? (separator < 0 ? userInfo : userInfo.substring(0, separator))
+                : (separator < 0 ? "" : userInfo.substring(separator + 1));
+        return URLDecoder.decode(value.replace("+", "%2B"), StandardCharsets.UTF_8);
+    }
+
+    private static URI parseDatabaseUri(String databaseUrl) {
+        try {
+            return URI.create(databaseUrl);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("DATABASE_URL is not a valid PostgreSQL URL.");
+        }
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
     }
 
     public static String getUploadDir() {
@@ -131,41 +211,4 @@ public class AppConfig {
         return Integer.parseInt(getProperty("session.timeout.minutes", getProperty("SESSION_TIMEOUT_MINUTES", "30")));
     }
 
-    public static String getGoogleClientId() {
-        return getProperty("google.client.id", getProperty("GOOGLE_CLIENT_ID", ""));
-    }
-
-    public static String getGoogleClientSecret() {
-        return getProperty("google.client.secret", getProperty("GOOGLE_CLIENT_SECRET", ""));
-    }
-
-    public static String getGoogleCallbackUrl() {
-        return getProperty("google.callback.url", getProperty("GOOGLE_CALLBACK_URL", "http://localhost:8080/LostFoundManagementSystem/api/auth/google/callback"));
-    }
-
-    public static String getGmailUser() {
-        return getProperty("gmail.user", getProperty("GMAIL_USER", ""));
-    }
-
-    public static String getGmailAppPassword() {
-        return getProperty("gmail.app.password", getProperty("GMAIL_APP_PASSWORD", ""));
-    }
-
-    public static boolean isGmailConfigured() {
-        String u = getGmailUser();
-        String p = getGmailAppPassword();
-        return u != null && !u.isBlank() && p != null && !p.isBlank() && !p.contains("your_16_digit");
-    }
-
-    public static String getAllowedEmailDomain() {
-        return getProperty("allowed.email.domain", getProperty("ALLOWED_EMAIL_DOMAIN", "gmail.com"));
-    }
-
-    public static String getJwtSecret() {
-        return getProperty("jwt.secret", getProperty("JWT_SECRET", "campus_lost_found_dev_secret_key_2026"));
-    }
-
-    public static String getAppUrl() {
-        return getProperty("app.url", getProperty("APP_URL", "http://localhost:8080/LostFoundManagementSystem"));
-    }
 }

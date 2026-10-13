@@ -21,7 +21,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Java -->
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
 
         <!-- Jakarta -->
         <jakarta.servlet.version>6.1.0</jakarta.servlet.version>
@@ -29,7 +29,7 @@
         <jakarta.jstl.version>3.0.2</jakarta.jstl.version>
 
         <!-- Libraries -->
-        <mysql.version>8.4.0</mysql.version>
+        <postgresql.version>42.7.7</postgresql.version>
         <jbcrypt.version>0.4</jbcrypt.version>
         <zxing.version>3.5.3</zxing.version>
         <pdfbox.version>3.0.4</pdfbox.version>
@@ -69,18 +69,11 @@
             <version>3.0.1</version>
         </dependency>
 
-        <!-- MySQL -->
+        <!-- PostgreSQL -->
         <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <version>${mysql.version}</version>
-        </dependency>
-
-        <!-- H2 Database (Embedded Fallback for Zero-Config Execution) -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>2.3.232</version>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
         </dependency>
 
         <!-- BCrypt -->
@@ -118,20 +111,6 @@
             <version>${gson.version}</version>
         </dependency>
 
-        <!-- Jakarta Mail API -->
-        <dependency>
-            <groupId>jakarta.mail</groupId>
-            <artifactId>jakarta.mail-api</artifactId>
-            <version>2.1.3</version>
-        </dependency>
-
-        <!-- Eclipse Angus Mail (Jakarta Mail Implementation for Gmail SMTP) -->
-        <dependency>
-            <groupId>org.eclipse.angus</groupId>
-            <artifactId>angus-mail</artifactId>
-            <version>2.0.3</version>
-        </dependency>
-
     </dependencies>
 
     <build>
@@ -147,7 +126,7 @@
                 <version>3.13.0</version>
 
                 <configuration>
-                    <release>17</release>
+                    <release>25</release>
                 </configuration>
             </plugin>
 

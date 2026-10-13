@@ -5,8 +5,7 @@ import java.sql.Timestamp;
 
 /**
  * User Entity POJO.
- * Supports Local Authentication, Google OAuth 2.0, Student/College Identification,
- * and Role-Based Access Control.
+ * Supports database-backed authentication and role-based access control.
  */
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -19,10 +18,6 @@ public class User implements Serializable {
     private String studentId;
     private String role; // STUDENT, FACULTY, ADMIN
     private String department;
-    private String googleId;
-    private String profileImage;
-    private boolean emailVerified = true;
-    private String authProvider = "LOCAL"; // LOCAL, GOOGLE, BOTH
     private Timestamp createdAt;
     private String status; // ACTIVE, BLOCKED
 
@@ -105,38 +100,6 @@ public class User implements Serializable {
         this.department = department;
     }
 
-    public String getGoogleId() {
-        return googleId;
-    }
-
-    public void setGoogleId(String googleId) {
-        this.googleId = googleId;
-    }
-
-    public String getProfileImage() {
-        return profileImage;
-    }
-
-    public void setProfileImage(String profileImage) {
-        this.profileImage = profileImage;
-    }
-
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
-
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
-
-    public String getAuthProvider() {
-        return authProvider;
-    }
-
-    public void setAuthProvider(String authProvider) {
-        this.authProvider = authProvider;
-    }
-
     public Timestamp getCreatedAt() {
         return createdAt;
     }
@@ -177,7 +140,6 @@ public class User implements Serializable {
                 ", email='" + email + '\'' +
                 ", role='" + role + '\'' +
                 ", department='" + department + '\'' +
-                ", authProvider='" + authProvider + '\'' +
                 ", status='" + status + '\'' +
                 '}';
     }

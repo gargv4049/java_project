@@ -119,9 +119,7 @@ public class ClaimServlet extends HttpServlet {
             return;
         }
         if (item.getUserId().equals(userId)) {
-            request.getSession().setAttribute("flashError", "You cannot claim an item you reported yourself.");
-            response.sendRedirect(request.getContextPath() + "/items?action=view&id=" + itemId);
-            return;
+            request.setAttribute("isSelfClaimDemo", true);
         }
         request.setAttribute("item", item);
         request.getRequestDispatcher("/claims/claim-item.jsp").forward(request, response);
@@ -193,10 +191,14 @@ public class ClaimServlet extends HttpServlet {
 
     private void handleApproveClaim(HttpServletRequest request, HttpServletResponse response, Long userId, String role) throws Exception {
         Long claimId = ValidationUtil.parseLong(request.getParameter("claimId"));
-        claimService.approveClaim(claimId, userId, role);
+        boolean approved = claimService.approveClaim(claimId, userId, role);
         adminDAO.logAudit(userId, "APPROVE_CLAIM: #" + claimId, request.getRemoteAddr());
 
-        request.getSession().setAttribute("flashSuccess", "Claim approved! A verification OTP and QR code have been issued.");
+        if (approved) {
+            request.getSession().setAttribute("flashSuccess", "Claim approved! A verification OTP and QR code have been issued.");
+        } else {
+            request.getSession().setAttribute("flashError", "This claim could not be approved. Refresh the claim and try again.");
+        }
         response.sendRedirect(request.getContextPath() + "/claims?action=details&id=" + claimId);
     }
 

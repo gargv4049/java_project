@@ -16,20 +16,13 @@ public interface UserDAO {
      */
     User register(User user) throws SQLException;
 
-    /**
-     * Finds a user by their unique email address.
-     */
+    /** Finds an account by its unique, normalized login identifier. */
     User findByEmail(String email) throws SQLException;
 
     /**
      * Finds a user by their primary key userId.
      */
     User findById(Long userId) throws SQLException;
-
-    /**
-     * Finds a user by their Google OAuth ID.
-     */
-    User findByGoogleId(String googleId) throws SQLException;
 
     /**
      * Updates profile details (name, phone, department, studentId).
@@ -40,16 +33,6 @@ public interface UserDAO {
      * Updates user's hashed password.
      */
     boolean updatePassword(Long userId, String newHashedPassword) throws SQLException;
-
-    /**
-     * Updates Google OAuth metadata (googleId, profileImage, authProvider).
-     */
-    boolean updateGoogleOAuth(Long userId, String googleId, String profileImage) throws SQLException;
-
-    /**
-     * Updates email verification status.
-     */
-    boolean updateEmailVerified(Long userId, boolean verified) throws SQLException;
 
     /**
      * Blocks a user (status = 'BLOCKED').

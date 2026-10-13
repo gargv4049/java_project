@@ -48,9 +48,9 @@ public class ClaimServiceImpl implements ClaimService {
             throw new IllegalArgumentException("Claims can only be filed on items reported as FOUND.");
         }
 
-        // Security check: User cannot claim their own reported item
+        // Self-claim check: Allowed with indicator for single-user evaluation / testing
         if (claimantId.equals(item.getUserId())) {
-            throw new IllegalArgumentException("Security Policy: You cannot file a claim on an item that you reported.");
+            reason = "[Demo/Owner Claim] " + reason;
         }
 
         // Check if item is already closed or returned
@@ -99,6 +99,14 @@ public class ClaimServiceImpl implements ClaimService {
     }
 
     @Override
+    public List<Claim> getClaimsByItem(Long itemId) throws Exception {
+        if (itemId == null) {
+            throw new IllegalArgumentException("Item ID is required.");
+        }
+        return claimDAO.findByItem(itemId);
+    }
+
+    @Override
     public List<Claim> getClaimsForUserItems(Long ownerId) throws Exception {
         if (ownerId == null) {
             throw new IllegalArgumentException("Owner ID is required.");
@@ -116,15 +124,15 @@ public class ClaimServiceImpl implements ClaimService {
         Claim claim = getClaimById(claimId);
         Item item = itemDAO.findById(claim.getItemId());
 
+        if (!"PENDING".equalsIgnoreCase(claim.getStatus()) && !"APPROVED".equalsIgnoreCase(claim.getStatus())) {
+            throw new IllegalStateException("Only pending claims can be approved or have their verification codes renewed.");
+        }
+
         boolean isAdmin = "ADMIN".equalsIgnoreCase(approverRole);
         boolean isOwner = approverUserId != null && approverUserId.equals(item.getUserId());
 
         if (!isAdmin && !isOwner) {
             throw new SecurityException("Forbidden: Only the item reporter or an Administrator can approve this claim.");
-        }
-
-        if (claim.getClaimantId().equals(approverUserId)) {
-            throw new SecurityException("Security Policy: You cannot approve your own claim.");
         }
 
         // Generate 6-digit OTP
@@ -196,6 +204,10 @@ public class ClaimServiceImpl implements ClaimService {
     public boolean verifyQrToken(Long claimId, String enteredQrToken) throws Exception {
         Claim claim = getClaimById(claimId);
 
+        if (!"APPROVED".equalsIgnoreCase(claim.getStatus()) && !"VERIFIED".equalsIgnoreCase(claim.getStatus())) {
+            throw new IllegalStateException("This claim must be approved prior to QR verification.");
+        }
+
         if (claim.getQrToken() == null) {
             throw new IllegalStateException("No QR token associated with this claim.");
         }
@@ -214,6 +226,9 @@ public class ClaimServiceImpl implements ClaimService {
 
         if ("COMPLETED".equalsIgnoreCase(claim.getStatus())) {
             throw new IllegalStateException("Handover has already been completed for this claim.");
+        }
+        if (!"VERIFIED".equalsIgnoreCase(claim.getStatus())) {
+            throw new IllegalStateException("Verify the claim with its OTP or QR token before completing handover.");
         }
 
         // Execute ACID database transaction

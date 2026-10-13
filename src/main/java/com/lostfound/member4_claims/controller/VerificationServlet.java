@@ -47,19 +47,18 @@ public class VerificationServlet extends HttpServlet {
         try {
             Claim claim = claimService.getClaimById(claimId);
             Item item = itemService.getItemById(claim.getItemId());
-
-            if (claim.getQrToken() != null && !claim.getQrToken().isEmpty()) {
-                String qrBase64 = QRCodeUtil.generateQRCodeBase64(claim.getQrToken(), 200, 200);
-                request.setAttribute("qrBase64", qrBase64);
+            if (!canAccessClaim(claim, item, session)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have permission to view this claim's verification codes.");
+                return;
             }
-
-            request.setAttribute("claim", claim);
-            request.setAttribute("item", item);
-            request.getRequestDispatcher("/claims/otp-verification.jsp").forward(request, response);
-
+            if (!"APPROVED".equalsIgnoreCase(claim.getStatus()) && !"VERIFIED".equalsIgnoreCase(claim.getStatus())) {
+                session.setAttribute("flashInfo", "OTP and QR verification become available after the item reporter or an administrator approves the claim.");
+                response.sendRedirect(request.getContextPath() + "/claims?action=details&id=" + claimId);
+                return;
+            }
+            showVerificationPage(request, response, claim, item);
         } catch (Exception e) {
-            request.getSession().setAttribute("flashError", e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/claims?action=my-claims");
+            throw new ServletException("Unable to load claim verification.", e);
         }
     }
 
@@ -82,6 +81,18 @@ public class VerificationServlet extends HttpServlet {
         }
 
         try {
+            Claim claim = claimService.getClaimById(claimId);
+            Item item = itemService.getItemById(claim.getItemId());
+            if (!canAccessClaim(claim, item, session)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have permission to verify this claim.");
+                return;
+            }
+            if (!"APPROVED".equalsIgnoreCase(claim.getStatus()) && !"VERIFIED".equalsIgnoreCase(claim.getStatus())) {
+                session.setAttribute("flashInfo", "OTP and QR verification become available after the item reporter or an administrator approves the claim.");
+                response.sendRedirect(request.getContextPath() + "/claims?action=details&id=" + claimId);
+                return;
+            }
+
             boolean verified = false;
             if ("QR".equalsIgnoreCase(verificationType)) {
                 verified = claimService.verifyQrToken(claimId, code);
@@ -96,7 +107,7 @@ public class VerificationServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/claims/handover?claimId=" + claimId);
             } else {
                 request.setAttribute("error", "Verification failed. Please double-check the code.");
-                doGet(request, response);
+                showVerificationPage(request, response, claim, item);
             }
 
         } catch (Exception e) {
@@ -104,14 +115,32 @@ public class VerificationServlet extends HttpServlet {
             try {
                 Claim claim = claimService.getClaimById(claimId);
                 Item item = itemService.getItemById(claim.getItemId());
-                request.setAttribute("claim", claim);
-                request.setAttribute("item", item);
-                if (claim.getQrToken() != null) {
-                    request.setAttribute("qrBase64", QRCodeUtil.generateQRCodeBase64(claim.getQrToken(), 200, 200));
+                if (!canAccessClaim(claim, item, session)) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have permission to verify this claim.");
+                    return;
                 }
-            } catch (Exception ignored) {
+                showVerificationPage(request, response, claim, item);
+            } catch (Exception renderingException) {
+                throw new ServletException("Unable to display claim verification.", renderingException);
             }
-            request.getRequestDispatcher("/claims/otp-verification.jsp").forward(request, response);
         }
+    }
+
+    private boolean canAccessClaim(Claim claim, Item item, HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        String role = (String) session.getAttribute("userRole");
+        return item != null && ("ADMIN".equalsIgnoreCase(role)
+                || claim.getClaimantId().equals(userId)
+                || item.getUserId().equals(userId));
+    }
+
+    private void showVerificationPage(HttpServletRequest request, HttpServletResponse response,
+                                      Claim claim, Item item) throws ServletException, IOException {
+        if (claim.getQrToken() != null && !claim.getQrToken().isEmpty()) {
+            request.setAttribute("qrBase64", QRCodeUtil.generateQRCodeBase64(claim.getQrToken(), 200, 200));
+        }
+        request.setAttribute("claim", claim);
+        request.setAttribute("item", item);
+        request.getRequestDispatcher("/claims/otp-verification.jsp").forward(request, response);
     }
 }

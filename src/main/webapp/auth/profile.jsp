@@ -33,9 +33,9 @@
                                 </div>
                             </div>
                             <div class="col-md-12">
-                                <label class="form-label text-muted">College Email (Permanent)</label>
-                                <input type="email" class="form-control bg-light" value="${profileUser.email}" readonly>
-                                <div class="form-text small">Your registered college email cannot be modified.</div>
+                                <label class="form-label text-muted">Username / email (login identifier)</label>
+                                <input type="text" class="form-control bg-light" value="${profileUser.email}" readonly>
+                                <div class="form-text small">This identifier is not verified and cannot be modified here.</div>
                             </div>
                             <div class="col-md-12">
                                 <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>

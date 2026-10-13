@@ -139,10 +139,10 @@ public class AdminDAOImpl implements AdminDAO {
 
         // 3. Monthly stats (last 6 months)
         Map<String, Map<String, Integer>> monthlyStats = new LinkedHashMap<>();
-        String monthSql = "SELECT DATE_FORMAT(item_date, '%Y-%m') AS ym, item_type, COUNT(*) AS cnt " +
+        String monthSql = "SELECT TO_CHAR(item_date, 'YYYY-MM') AS ym, item_type, COUNT(*) AS cnt " +
                           "FROM items " +
-                          "WHERE item_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) " +
-                          "GROUP BY ym, item_type ORDER BY ym ASC";
+                          "WHERE item_date >= CURRENT_DATE - INTERVAL '6 months' " +
+                          "GROUP BY 1, 2 ORDER BY 1 ASC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(monthSql);
              ResultSet rs = ps.executeQuery()) {
@@ -166,7 +166,7 @@ public class AdminDAOImpl implements AdminDAO {
                      "FROM items i " +
                      "JOIN categories c ON i.category_id = c.category_id " +
                      "JOIN users u ON i.user_id = u.user_id " +
-                     "WHERE i.status = 'ACTIVE' AND i.item_date <= DATE_SUB(CURDATE(), INTERVAL ? DAY) " +
+                     "WHERE i.status = 'ACTIVE' AND i.item_date <= CURRENT_DATE - (? * INTERVAL '1 day') " +
                      "ORDER BY i.item_date ASC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

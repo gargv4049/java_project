@@ -32,7 +32,7 @@ public class BCryptUtil {
         }
         try {
             return BCrypt.checkpw(plainPassword, hashedPassword);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return false;
         }
     }

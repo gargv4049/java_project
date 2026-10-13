@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * QR Code Generator Utility using Google ZXing.
+ * QR Code Generator Utility using ZXing.
  * Generates secure QR tokens rendered as Base64 Data URLs for seamless JSP display.
  */
 public class QRCodeUtil {

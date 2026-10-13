@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +33,9 @@ public class DatabaseInitializer {
         try {
             boolean tablesExist = checkUsersTableExists(conn);
             if (!tablesExist) {
+                if (hasApplicationTables(conn)) {
+                    throw new SQLException("Application tables already exist but users is missing; refusing to initialize a partial schema.");
+                }
                 LOGGER.info("Users table not detected. Initializing database schema and seed data...");
                 executeSchemaScript(conn);
                 LOGGER.info("Database schema and seed records initialized successfully.");
@@ -39,7 +43,7 @@ public class DatabaseInitializer {
                 LOGGER.info("Database tables verified.");
             }
 
-            // Always run migrations to ensure schema is up-to-date with latest auth & OTP features
+            // Keep legacy account tables usable while removing obsolete external-auth data.
             runSchemaMigrations(conn);
 
             initialized = true;
@@ -47,51 +51,82 @@ public class DatabaseInitializer {
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed during automatic database schema initialization", e);
+            throw new IllegalStateException("Database schema initialization failed.", e);
         }
     }
 
-    private static boolean checkUsersTableExists(Connection conn) {
-        try (Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery("SELECT 1 FROM users LIMIT 1")) {
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+    private static boolean checkUsersTableExists(Connection conn) throws Exception {
+        return tableExists(conn, "users");
     }
 
-    private static void runSchemaMigrations(Connection conn) {
-        String[] migrations = {
-                "ALTER TABLE users ADD COLUMN student_id VARCHAR(50) DEFAULT NULL",
-                "ALTER TABLE users ADD COLUMN google_id VARCHAR(100) DEFAULT NULL",
-                "ALTER TABLE users ADD COLUMN profile_image VARCHAR(500) DEFAULT NULL",
-                "ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT TRUE",
-                "ALTER TABLE users ADD COLUMN auth_provider VARCHAR(20) DEFAULT 'LOCAL'",
-                "CREATE TABLE IF NOT EXISTS otps (" +
-                        "otp_id BIGINT PRIMARY KEY AUTO_INCREMENT, " +
-                        "email VARCHAR(150) NOT NULL, " +
-                        "otp_code VARCHAR(20) NOT NULL, " +
-                        "otp_purpose VARCHAR(50) NOT NULL, " +
-                        "reference_id BIGINT DEFAULT NULL, " +
-                        "temp_data TEXT DEFAULT NULL, " +
-                        "attempts INT DEFAULT 0, " +
-                        "expires_at TIMESTAMP NOT NULL, " +
-                        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
-        };
+    private static boolean hasApplicationTables(Connection conn) throws Exception {
+        for (String tableName : new String[]{"items", "claims", "categories", "reports", "notifications", "audit_logs"}) {
+            if (tableExists(conn, tableName)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-        for (String sql : migrations) {
+    private static void runSchemaMigrations(Connection conn) throws Exception {
+        if (!columnExists(conn, "users", "student_id")) {
             try (Statement st = conn.createStatement()) {
-                st.execute(sql);
-            } catch (Exception ignored) {
-                // Ignore if column or table already exists
+                st.execute("ALTER TABLE users ADD COLUMN student_id VARCHAR(50) DEFAULT NULL");
+            }
+        }
+
+        try (Statement st = conn.createStatement();
+             ResultSet duplicates = st.executeQuery(
+                     "SELECT LOWER(email) FROM users GROUP BY LOWER(email) HAVING COUNT(*) > 1 LIMIT 1")) {
+            if (duplicates.next()) {
+                throw new SQLException("Duplicate login identifiers differ only by letter case. Resolve these rows before startup.");
+            }
+        }
+        try (Statement st = conn.createStatement()) {
+            st.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_uq ON users (LOWER(email))");
+        }
+
+        for (String obsoleteColumn : new String[]{"google_id", "profile_image", "email_verified", "auth_provider"}) {
+            if (columnExists(conn, "users", obsoleteColumn)) {
+                try (Statement st = conn.createStatement()) {
+                    st.execute("ALTER TABLE users DROP COLUMN " + obsoleteColumn);
+                }
+            }
+        }
+
+        if (tableExists(conn, "otps")) {
+            try (Statement st = conn.createStatement()) {
+                st.execute("DROP TABLE otps");
             }
         }
     }
 
-    private static void executeSchemaScript(Connection conn) {
+    private static boolean columnExists(Connection conn, String tableName, String columnName) throws Exception {
+        try (ResultSet columns = conn.getMetaData().getColumns(conn.getCatalog(), conn.getSchema(), tableName, null)) {
+            while (columns.next()) {
+                if (columnName.equalsIgnoreCase(columns.getString("COLUMN_NAME"))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean tableExists(Connection conn, String tableName) throws Exception {
+        try (ResultSet tables = conn.getMetaData().getTables(conn.getCatalog(), conn.getSchema(), tableName, new String[]{"TABLE"})) {
+            while (tables.next()) {
+                if (tableName.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void executeSchemaScript(Connection conn) throws Exception {
         try (InputStream in = DatabaseInitializer.class.getClassLoader().getResourceAsStream("schema.sql")) {
             if (in == null) {
-                LOGGER.warning("schema.sql not found on classpath!");
-                return;
+                throw new SQLException("schema.sql was not found on the application classpath.");
             }
 
             StringBuilder sb = new StringBuilder();
@@ -107,23 +142,28 @@ public class DatabaseInitializer {
             }
 
             String[] statements = sb.toString().split(";");
-            try (Statement stmt = conn.createStatement()) {
-                for (String rawSql : statements) {
-                    String sql = rawSql.trim();
-                    if (sql.isEmpty()) {
-                        continue;
-                    }
-                    try {
-                        stmt.execute(sql);
-                    } catch (Exception ex) {
-                        LOGGER.log(Level.WARNING, "SQL execution warning on statement [" + 
-                                   (sql.length() > 50 ? sql.substring(0, 50) + "..." : sql) + "]: " + ex.getMessage());
+            boolean originalAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            try {
+                try (Statement stmt = conn.createStatement()) {
+                    for (String rawSql : statements) {
+                        String sql = rawSql.trim();
+                        if (!sql.isEmpty()) {
+                            stmt.execute(sql);
+                        }
                     }
                 }
+                conn.commit();
+            } catch (Exception e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackError) {
+                    e.addSuppressed(rollbackError);
+                }
+                throw e;
+            } finally {
+                conn.setAutoCommit(originalAutoCommit);
             }
-
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error executing schema script", e);
         }
     }
 }
