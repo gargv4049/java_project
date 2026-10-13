@@ -491,6 +491,8 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 
 ## 📄 License & Academic Attribution
 Developed for university and college property recovery systems. Free to use and extend for academic projects, institutional operations, and portfolio demonstrations.
+ Saloni
+
 
 ## 🧹 Keeping This README Current
 
@@ -499,3 +501,4 @@ Developed for university and college property recovery systems. Free to use and 
 - Keep the 12-week plan as a planning outline unless actual dated progress records are available.
 - Mark testing checklist entries as complete only after a test has been run and verified; update troubleshooting entries when a root cause or fix changes.
 - Before publishing, check links, command paths, Tomcat context names, and Maven artifact names against the current project.
+- main
