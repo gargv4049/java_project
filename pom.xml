@@ -21,11 +21,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Java -->
-<<<<<<< HEAD
-        <maven.compiler.release>17</maven.compiler.release>
-=======
         <maven.compiler.release>25</maven.compiler.release>
->>>>>>> 67eb56a (Convert application database to PostgreSQL)
 
         <!-- Jakarta -->
         <jakarta.servlet.version>6.1.0</jakarta.servlet.version>
@@ -33,11 +29,7 @@
         <jakarta.jstl.version>3.0.2</jakarta.jstl.version>
 
         <!-- Libraries -->
-<<<<<<< HEAD
-        <mysql.version>8.4.0</mysql.version>
-=======
         <postgresql.version>42.7.7</postgresql.version>
->>>>>>> 67eb56a (Convert application database to PostgreSQL)
         <jbcrypt.version>0.4</jbcrypt.version>
         <zxing.version>3.5.3</zxing.version>
         <pdfbox.version>3.0.4</pdfbox.version>
@@ -77,19 +69,11 @@
             <version>3.0.1</version>
         </dependency>
 
-<<<<<<< HEAD
-        <!-- MySQL -->
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <version>${mysql.version}</version>
-=======
         <!-- PostgreSQL -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
->>>>>>> 67eb56a (Convert application database to PostgreSQL)
         </dependency>
 
         <!-- BCrypt -->
@@ -142,11 +126,7 @@
                 <version>3.13.0</version>
 
                 <configuration>
-<<<<<<< HEAD
-                    <release>17</release>
-=======
                     <release>25</release>
->>>>>>> 67eb56a (Convert application database to PostgreSQL)
                 </configuration>
             </plugin>
 

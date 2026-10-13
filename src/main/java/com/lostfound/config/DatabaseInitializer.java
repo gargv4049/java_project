@@ -34,11 +34,7 @@ public class DatabaseInitializer {
             boolean tablesExist = checkUsersTableExists(conn);
             if (!tablesExist) {
                 if (hasApplicationTables(conn)) {
-<<<<<<< HEAD
-                    throw new SQLException("Application tables already exist but users is missing; refusing to run the destructive initial schema.");
-=======
                     throw new SQLException("Application tables already exist but users is missing; refusing to initialize a partial schema.");
->>>>>>> 67eb56a (Convert application database to PostgreSQL)
                 }
                 LOGGER.info("Users table not detected. Initializing database schema and seed data...");
                 executeSchemaScript(conn);
@@ -87,11 +83,7 @@ public class DatabaseInitializer {
             }
         }
         try (Statement st = conn.createStatement()) {
-<<<<<<< HEAD
-            st.execute("ALTER TABLE users MODIFY COLUMN email VARCHAR(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL");
-=======
             st.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_uq ON users (LOWER(email))");
->>>>>>> 67eb56a (Convert application database to PostgreSQL)
         }
 
         for (String obsoleteColumn : new String[]{"google_id", "profile_image", "email_verified", "auth_provider"}) {
@@ -110,11 +102,7 @@ public class DatabaseInitializer {
     }
 
     private static boolean columnExists(Connection conn, String tableName, String columnName) throws Exception {
-<<<<<<< HEAD
-        try (ResultSet columns = conn.getMetaData().getColumns(conn.getCatalog(), null, tableName, null)) {
-=======
         try (ResultSet columns = conn.getMetaData().getColumns(conn.getCatalog(), conn.getSchema(), tableName, null)) {
->>>>>>> 67eb56a (Convert application database to PostgreSQL)
             while (columns.next()) {
                 if (columnName.equalsIgnoreCase(columns.getString("COLUMN_NAME"))) {
                     return true;
@@ -125,11 +113,7 @@ public class DatabaseInitializer {
     }
 
     private static boolean tableExists(Connection conn, String tableName) throws Exception {
-<<<<<<< HEAD
-        try (ResultSet tables = conn.getMetaData().getTables(conn.getCatalog(), null, tableName, new String[]{"TABLE"})) {
-=======
         try (ResultSet tables = conn.getMetaData().getTables(conn.getCatalog(), conn.getSchema(), tableName, new String[]{"TABLE"})) {
->>>>>>> 67eb56a (Convert application database to PostgreSQL)
             while (tables.next()) {
                 if (tableName.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
                     return true;
@@ -139,18 +123,10 @@ public class DatabaseInitializer {
         return false;
     }
 
-<<<<<<< HEAD
-    private static void executeSchemaScript(Connection conn) {
-        try (InputStream in = DatabaseInitializer.class.getClassLoader().getResourceAsStream("schema.sql")) {
-            if (in == null) {
-                LOGGER.warning("schema.sql not found on classpath!");
-                return;
-=======
     private static void executeSchemaScript(Connection conn) throws Exception {
         try (InputStream in = DatabaseInitializer.class.getClassLoader().getResourceAsStream("schema.sql")) {
             if (in == null) {
                 throw new SQLException("schema.sql was not found on the application classpath.");
->>>>>>> 67eb56a (Convert application database to PostgreSQL)
             }
 
             StringBuilder sb = new StringBuilder();
@@ -166,25 +142,6 @@ public class DatabaseInitializer {
             }
 
             String[] statements = sb.toString().split(";");
-<<<<<<< HEAD
-            try (Statement stmt = conn.createStatement()) {
-                for (String rawSql : statements) {
-                    String sql = rawSql.trim();
-                    if (sql.isEmpty()) {
-                        continue;
-                    }
-                    try {
-                        stmt.execute(sql);
-                    } catch (Exception ex) {
-                        LOGGER.log(Level.WARNING, "SQL execution warning on statement [" + 
-                                   (sql.length() > 50 ? sql.substring(0, 50) + "..." : sql) + "]: " + ex.getMessage());
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error executing schema script", e);
-=======
             boolean originalAutoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
             try {
@@ -207,7 +164,6 @@ public class DatabaseInitializer {
             } finally {
                 conn.setAutoCommit(originalAutoCommit);
             }
->>>>>>> 67eb56a (Convert application database to PostgreSQL)
         }
     }
 }
