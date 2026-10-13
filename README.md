@@ -20,6 +20,20 @@ The **Campus Lost & Found Management System** is a complete, production-grade we
 - **Security Controls**: BCrypt password hashing (cost factor 12), parameterized `PreparedStatement` queries, session invalidation on logout, role/ownership checks, and allowlisted file-upload types.
 - **Database Authentication**: Accounts register with a unique username or email identifier and BCrypt password; sign-in and password changes use PostgreSQL only. No external sign-in or email verification is required.
 
+---
+
+## 👥 Team Members
+
+| S.No. | Name | Enrollment No. | Email | Contact | Module |
+|---|---|---|---|---|---|
+| 1 | Renuka Nagar | 24E1ARCSF30P132 | renukanagar.2007@gmail.com | 8005780667 | Authentication & User Accounts |
+| 2 | Saloni Kumari | 24E1ARCSF10P144 | salonikri5617@gmail.com | 9661810983 | Item Inventory & Image Uploads |
+| 3 | Simple Agrawal | 24E1ARCSF40P160 | Simpleagarwal3303@gmail.com | 7296973303 | Search Engine & Match Algorithms |
+| 4 | Teena Soni | 24E1ARCSF30P175 | soniteena427@gmail.com | 9772912956 | Claims, OTP & Transactional Handover |
+| 5 | Vivek Garg | 24E1ARCSM40P186 | gargv4049@gmail.com | 8005884935 | Dashboard, Reports & Analytics |
+
+---
+
 ## 🗓️ 12-Week Project Work Plan
 
 This is a suggested week-by-week development and academic reporting plan for the features in this repository. It describes project work areas, not dated evidence that each activity was completed in a particular week. Adjust the sequence and completion status to match the actual course schedule and project records.
