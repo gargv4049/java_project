@@ -5,6 +5,8 @@
 
 # Build target & logs
 target/
+bin/
+*.class
 *.log
 *.tmp
 lost_found_db_data.*
@@ -16,3 +18,5 @@ lost_found_db_data.*
 .settings/
 .classpath
 .project
+.DS_Store
+Thumbs.db

@@ -139,19 +139,27 @@ public class AdminDAOImpl implements AdminDAO {
 
         // 3. Monthly stats (last 6 months)
         Map<String, Map<String, Integer>> monthlyStats = new LinkedHashMap<>();
-        String monthSql = "SELECT TO_CHAR(item_date, 'YYYY-MM') AS ym, item_type, COUNT(*) AS cnt " +
-                          "FROM items " +
-                          "WHERE item_date >= CURRENT_DATE - INTERVAL '6 months' " +
-                          "GROUP BY 1, 2 ORDER BY 1 ASC";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(monthSql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                String ym = rs.getString("ym");
-                String type = rs.getString("item_type");
-                int count = rs.getInt("cnt");
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            boolean isMySql = DatabaseConnection.isMySQL(conn);
+            String monthSql = isMySql
+                    ? "SELECT DATE_FORMAT(item_date, '%Y-%m') AS ym, item_type, COUNT(*) AS cnt " +
+                      "FROM items " +
+                      "WHERE item_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) " +
+                      "GROUP BY ym, item_type ORDER BY ym ASC"
+                    : "SELECT TO_CHAR(item_date, 'YYYY-MM') AS ym, item_type, COUNT(*) AS cnt " +
+                      "FROM items " +
+                      "WHERE item_date >= CURRENT_DATE - INTERVAL '6 months' " +
+                      "GROUP BY 1, 2 ORDER BY 1 ASC";
 
-                monthlyStats.computeIfAbsent(ym, k -> new HashMap<>()).put(type, count);
+            try (PreparedStatement ps = conn.prepareStatement(monthSql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String ym = rs.getString("ym");
+                    String type = rs.getString("item_type");
+                    int count = rs.getInt("cnt");
+
+                    monthlyStats.computeIfAbsent(ym, k -> new HashMap<>()).put(type, count);
+                }
             }
         }
         analytics.put("monthlyStats", monthlyStats);
@@ -162,39 +170,49 @@ public class AdminDAOImpl implements AdminDAO {
     @Override
     public List<Item> getDisposalCandidates(int daysThreshold) throws SQLException {
         List<Item> items = new ArrayList<>();
-        String sql = "SELECT i.*, c.name AS category_name, u.name AS user_name, u.email AS user_email " +
-                     "FROM items i " +
-                     "JOIN categories c ON i.category_id = c.category_id " +
-                     "JOIN users u ON i.user_id = u.user_id " +
-                     "WHERE i.status = 'ACTIVE' AND i.item_date <= CURRENT_DATE - (? * INTERVAL '1 day') " +
-                     "ORDER BY i.item_date ASC";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            boolean isMySql = DatabaseConnection.isMySQL(conn);
+            String sql = isMySql
+                    ? "SELECT i.*, c.name AS category_name, u.name AS user_name, u.email AS user_email " +
+                      "FROM items i " +
+                      "JOIN categories c ON i.category_id = c.category_id " +
+                      "JOIN users u ON i.user_id = u.user_id " +
+                      "WHERE i.status = 'ACTIVE' AND i.item_date <= DATE_SUB(CURDATE(), INTERVAL ? DAY) " +
+                      "ORDER BY i.item_date ASC"
+                    : "SELECT i.*, c.name AS category_name, u.name AS user_name, u.email AS user_email " +
+                      "FROM items i " +
+                      "JOIN categories c ON i.category_id = c.category_id " +
+                      "JOIN users u ON i.user_id = u.user_id " +
+                      "WHERE i.status = 'ACTIVE' AND i.item_date <= CURRENT_DATE - (? * INTERVAL '1 day') " +
+                      "ORDER BY i.item_date ASC";
 
-            ps.setInt(1, daysThreshold > 0 ? daysThreshold : 60);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Item item = new Item();
-                    item.setItemId(rs.getLong("item_id"));
-                    item.setUserId(rs.getLong("user_id"));
-                    item.setCategoryId(rs.getInt("category_id"));
-                    item.setTitle(rs.getString("title"));
-                    item.setDescription(rs.getString("description"));
-                    item.setItemType(rs.getString("item_type"));
-                    item.setLocation(rs.getString("location"));
-                    item.setLatitude(rs.getDouble("latitude"));
-                    item.setLongitude(rs.getDouble("longitude"));
-                    item.setItemDate(rs.getDate("item_date"));
-                    item.setImage(rs.getString("image"));
-                    item.setStatus(rs.getString("status"));
-                    item.setCreatedAt(rs.getTimestamp("created_at"));
-                    item.setCategoryName(rs.getString("category_name"));
-                    item.setUserName(rs.getString("user_name"));
-                    item.setUserEmail(rs.getString("user_email"));
-                    items.add(item);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, daysThreshold > 0 ? daysThreshold : 60);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Item item = new Item();
+                        item.setItemId(rs.getLong("item_id"));
+                        item.setUserId(rs.getLong("user_id"));
+                        item.setCategoryId(rs.getInt("category_id"));
+                        item.setTitle(rs.getString("title"));
+                        item.setDescription(rs.getString("description"));
+                        item.setItemType(rs.getString("item_type"));
+                        item.setLocation(rs.getString("location"));
+                        item.setLatitude(rs.getDouble("latitude"));
+                        item.setLongitude(rs.getDouble("longitude"));
+                        item.setItemDate(rs.getDate("item_date"));
+                        item.setImage(rs.getString("image"));
+                        item.setStatus(rs.getString("status"));
+                        item.setCreatedAt(rs.getTimestamp("created_at"));
+                        item.setCategoryName(rs.getString("category_name"));
+                        item.setUserName(rs.getString("user_name"));
+                        item.setUserEmail(rs.getString("user_email"));
+                        items.add(item);
+                    }
                 }
             }
         }
         return items;
     }
 }
+

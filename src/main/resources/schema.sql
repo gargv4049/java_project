@@ -87,6 +87,7 @@ CREATE TABLE audit_logs (
     action VARCHAR(255) NOT NULL,
     ip_address VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    
 );
 
 CREATE TABLE matches (

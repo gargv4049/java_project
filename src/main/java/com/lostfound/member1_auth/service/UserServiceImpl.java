@@ -69,8 +69,10 @@ public class UserServiceImpl implements UserService {
         try {
             return userDAO.register(user);
         } catch (java.sql.SQLException e) {
-            if (e.getErrorCode() == 1062 || "23000".equals(e.getSQLState())) {
-                throw new IllegalArgumentException("An account with this username or email already exists.");
+            for (java.sql.SQLException cause = e; cause != null; cause = cause.getNextException()) {
+                if ("23505".equals(cause.getSQLState()) || cause.getErrorCode() == 1062 || "23000".equals(cause.getSQLState())) {
+                    throw new IllegalArgumentException("An account with this username or email already exists.");
+                }
             }
             throw e;
         }

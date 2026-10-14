@@ -1,0 +1,63 @@
+services:
+  # ============================================================================
+  # PostgreSQL Database Service with auto-initialization from database/lost_found_postgres.sql
+  # ============================================================================
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: lostfound_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lost_found_db
+      POSTGRES_USER: lostfound
+      POSTGRES_PASSWORD: lostfound123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/lost_found_postgres.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lostfound -d lost_found_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lostfound_net
+
+  # ============================================================================
+  # Campus Lost & Found Tomcat 11 Web Application Service
+  # ============================================================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lostfound_web
+    restart: unless-stopped
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres_db
+      DB_PORT: 5432
+      DB_NAME: lost_found_db
+      DB_USER: lostfound
+      DB_PASSWORD: lostfound123
+      DB_TYPE: postgres
+      DB_SSLMODE: disable
+      PORT: 8080
+      APP_URL: http://localhost:8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - app_uploads:/usr/local/tomcat/uploads/items
+    networks:
+      - lostfound_net
+
+volumes:
+  postgres_data:
+    name: lostfound_postgres_data
+  app_uploads:
+    name: lostfound_app_uploads
+
+networks:
+  lostfound_net:
+    name: lostfound_network

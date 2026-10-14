@@ -9,12 +9,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Notification Service.
  * Delivers alerts, match recommendations, and status updates to users.
  */
 public class NotificationService {
+
+    private static final Logger LOGGER = Logger.getLogger(NotificationService.class.getName());
 
     public List<Notification> getNotificationsForUser(Long userId) throws SQLException {
         List<Notification> list = new ArrayList<>();
@@ -99,7 +103,8 @@ public class NotificationService {
             ps.setString(2, title);
             ps.setString(3, message != null ? message : "");
             ps.executeUpdate();
-        } catch (Exception ignored) {
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Failed to create notification for user " + userId, e);
         }
     }
 }

@@ -62,14 +62,15 @@ Use the **Comprehensive Testing Checklist** section to record the checks actuall
 | Layer | Technologies |
 |---|---|
 | **Backend Core** | Java 25, Jakarta Servlet 6.1, Jakarta JSP 4.0, Jakarta JSTL 3.0 |
-| **Persistence** | JDBC (Java Database Connectivity), PostgreSQL JDBC Driver 42.7, Raw SQL PreparedStatements |
+| **Persistence** | JDBC, PostgreSQL JDBC Driver 42.7+, MySQL Connector/J 8.4+, PreparedStatement SQL |
+| **Databases** | **PostgreSQL 14+** (default, local and cloud) & **MySQL 8.0+ / MariaDB 10.5+** (supported) |
+| **Containerization** | Docker, Docker Compose (Multi-stage build, Tomcat 11 + PostgreSQL 16) |
 | **Security & Hashing** | jBCrypt 0.4 (Blowfish salt rounds = 12), Secure HTTP Session Management |
 | **Algorithms** | Custom Levenshtein Distance (Text), Custom Haversine Formula (GPS Proximity) |
-| **Third-Party Libraries** | ZXing 3.5.3 (QR Code Generation), Apache PDFBox 3.0.4 (PDF Engine), Gson 2.11.0 |
+| **Third-Party Libraries** | ZXing 3.5.3 (QR Codes), Apache PDFBox 3.0.4 (PDF Engine), Gson 2.11.0, JUnit 5 |
 | **Frontend UI** | JSP, HTML5, CSS3, JavaScript (ES6), Bootstrap 5.3.3, Bootstrap Icons, Chart.js 4.4 |
 | **Build Tool & Packaging** | Apache Maven 3.10+, WAR (Web Application Archive) |
 | **Runtime Server** | Apache Tomcat 11.0.x (Jakarta EE 10/11) |
-| **Database** | PostgreSQL 14+ |
 
 ---
 
@@ -78,14 +79,23 @@ Use the **Comprehensive Testing Checklist** section to record the checks actuall
 ```
 java_project-main/
 │
+├── Dockerfile                                   # Multi-stage production Docker image (Tomcat 11)
+├── docker-compose.yml                           # Full-stack Docker orchestration (PostgreSQL + Web app)
 ├── pom.xml                                      # Maven configuration (Jakarta EE, Tomcat 11, JDK 25)
 ├── README.md                                    # Comprehensive system documentation
+├── .env.example                                 # Sample environment variables configuration
+├── .gitignore                                   # Version control exclusions
 │
 ├── database/
-│   └── lost_found.sql                           # Complete DDL schema & sample data
+│   ├── lost_found.sql                           # MySQL schema & development seed data (destructive reset)
+│   ├── lost_found_mysql.sql                     # Dedicated MySQL 8.0+ / MariaDB setup script
+│   └── lost_found_postgres.sql                  # PostgreSQL 14+ schema & development seed data (destructive reset)
 │
-└── src/
-    └── main/
+├── src/
+│   ├── test/                                    # Automated JUnit 5 Unit Tests (20 tests passed)
+│   │   └── java/com/lostfound/                  # Tests for algorithms, auth, validation, config
+│   │
+│   └── main/
         ├── resources/
         │   └── db.properties                    # Non-secret defaults; credentials come from environment
         │
@@ -306,21 +316,54 @@ Install PostgreSQL and ensure its `bin` directory is on `PATH`. Create the appli
 createdb -U postgres lost_found_db
 ```
 
-The application initializes its tables and development seed data automatically the first time it connects to an empty database. To initialize it manually instead, run the psql script from the repository root:
+The application initializes its tables and development seed data automatically the first time it connects to an empty database. To initialize manually, use the PostgreSQL script:
 
 ```powershell
-psql -U postgres -d lost_found_db -f .\database\lost_found.sql
+psql -U postgres -d lost_found_db -f .\database\lost_found_postgres.sql
 ```
 
-`database/lost_found.sql` includes the canonical schema in `src/main/resources/schema.sql`. It is intended for a new, empty database and does not drop existing tables or data. Do not run it against an already initialized database. The seed includes demo accounts; change their credentials before using a public deployment.
+This script drops and recreates the application's tables before adding demo data. **Only run it against a new or disposable database**; it will delete existing application data. For an existing database, let the application apply its non-destructive schema checks, or back up and migrate the data separately. The seed includes demo accounts; change their credentials before using a public deployment.
 
-Set `DATABASE_URL` to your provider's PostgreSQL connection URL, or set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. `DATABASE_URL` accepts Render's `postgres://` / `postgresql://` URL and is converted to JDBC with SSL required; URL-embedded credentials are used unless overridden by `DB_USER` or `DB_PASSWORD`. For JDBC URLs, configure `DB_URL` with `DB_USERNAME` and `DB_PASSWORD`. The local default is `jdbc:postgresql://localhost:5432/lost_found_db`. Keep credentials in the hosting platform's environment settings or a local `.env` file; never commit a real `.env` file or production credentials to `src/main/resources/db.properties`.
+Switching `DATABASE_URL` from an existing MySQL service to PostgreSQL does not migrate its data. Export and import the real rows separately, preserving primary and foreign keys, then reset PostgreSQL identity sequences if IDs were imported explicitly. Test against a PostgreSQL copy before switching production traffic; do not use the reset script on a production database.
 
-## 🔨 Maven Build Commands
+Development demo accounts (created only when the schema is first initialized):
 
-From the project root directory in PowerShell:
+| Role | Login ID | Password |
+| --- | --- | --- |
+| Administrator | `admin@college.com` | `Admin@123` |
+| Student | `student@college.com` | `Student@123` |
+| Faculty | `faculty@college.com` | `Faculty@123` |
+
+### 🗄️ Database Configuration & Credentials
+
+PostgreSQL is the default for local development, Docker, and cloud hosting. MySQL and MariaDB remain supported when explicitly configured.
+
+Set the database connection in `.env` or as environment variables:
+- **For local PostgreSQL**:
+  ```env
+  DB_TYPE=postgres
+  DB_HOST=localhost
+  DB_PORT=5432
+  DB_NAME=lost_found_db
+  DB_USER=postgres
+  DB_PASSWORD=your_password
+  DB_SSLMODE=prefer
+  ```
+- **For hosted databases**, use the complete connection URL provided by your database host. PostgreSQL providers generally require SSL; their URL should include `sslmode=require`.
+  - MySQL: `DATABASE_URL=mysql://user:password@host:3306/lost_found_db`
+  - PostgreSQL: `DATABASE_URL=postgresql://user:password@host:5432/lost_found_db`
+
+---
+
+## 🔨 Maven Build & Test Commands
+
+Run automated tests and generate the production WAR from PowerShell:
 
 ```powershell
+# Run all 20 automated unit tests
+mvn test
+
+# Package the production WAR
 mvn clean package
 ```
 
@@ -331,40 +374,103 @@ target/LostFoundManagementSystem.war
 
 ---
 
-## 🐳 Docker deployment
+## 🐳 Quickstart with Docker Compose (Recommended)
 
-Build the image from the project root:
+Run the complete stack (**PostgreSQL 16 Database** + **Tomcat 11 Web Application**) with a single command:
 
-```powershell
-docker build -t campus-lost-found .
+```bash
+docker compose up --build -d
 ```
 
-Run it with database settings supplied at runtime. On Render, set
-`DATABASE_URL` to the PostgreSQL internal connection URL in the web service's
-environment settings. Locally, copy `.env.example` to `.env` and configure
-`DB_HOST` (use `host.docker.internal` when PostgreSQL runs on Windows),
-`DB_NAME`, `DB_USER`, and `DB_PASSWORD`. Keep `.env` out of source control:
+- **Web Portal**: `http://localhost:8080/` or `http://localhost:8080/LostFoundManagementSystem/`
+- **PostgreSQL Database**: `localhost:5432` (Database: `lost_found_db`, User: `lostfound`, Password: `lostfound123`)
+- **Database Schema**: Auto-imported on first startup from `database/lost_found_postgres.sql`. The script drops and recreates app tables, so Docker only runs it when initializing a new volume.
+- **Logs**: `docker compose logs -f`
+- **Stop**: `docker compose down`
 
-```powershell
-Copy-Item .env.example .env
-# Edit .env and set the PostgreSQL connection variables before running.
-docker run --name campus-lost-found `
-  -p 10000:10000 `
-  -e PORT=10000 `
-  --env-file .env `
-  -v lostfound-uploads:/usr/local/tomcat/uploads/items `
-  campus-lost-found
-```
+---
 
-The named volume preserves uploaded item images when the container is
-replaced. The application is available at `http://localhost:10000/`. Hosting
-platforms inject `PORT`; set `DATABASE_URL` (or the supported `DB_*` variables)
-as runtime environment variables. The Docker image does not bake in database
-credentials.
+## 🌐 Step-by-Step Free Deployment Guide: Database & Website
 
-`.dockerignore` excludes local environment files and
-`src/main/resources/db.properties` from the Docker build context so local
-credentials are not copied into the image.
+You can deploy both the database and the web application **100% free** without requiring a credit card using the following tested platforms:
+
+### 1. Free Database Setup (PostgreSQL)
+
+#### Option A: Supabase or Neon (PostgreSQL)
+1. Create a PostgreSQL project with your chosen provider.
+2. Initialize a new database by running `database/lost_found_postgres.sql` in its SQL editor, or let the application initialize an empty database on first connection.
+3. Copy the provider's PostgreSQL connection URL, including the credentials and SSL mode, into `DATABASE_URL`.
+4. **Do not run the SQL script against a database containing data**: it drops and recreates the application tables.
+
+#### Option B: Aiven for MySQL (MySQL alternative)
+1. Visit **[Aiven.io](https://aiven.io/)** and sign up for a free account.
+2. In the console, click **Create Service** &rarr; select **MySQL**.
+3. Choose the **Free Plan** (Includes 5 GB storage, 1 CPU, 1 GB RAM).
+4. Select a cloud region near you and click **Create Service**.
+5. Once running (takes 1-2 minutes):
+   - Copy the **Service URI** (e.g. `mysql://avnadmin:xxxx@mysql-xxx.aivencloud.com:12345/defaultdb?ssl-mode=REQUIRED`).
+   - Create the database `lost_found_db` in the Aiven console **Databases** tab, or import `database/lost_found.sql`.
+   - Your connection string is:
+     ```
+     DATABASE_URL=mysql://avnadmin:YOUR_PASSWORD@YOUR_HOST:YOUR_PORT/lost_found_db
+     ```
+
+#### Option C: Clever Cloud (MySQL alternative)
+1. Sign up for free at **[Clever-Cloud.com](https://www.clever-cloud.com/)**.
+2. Click **Create** &rarr; **an add-on** &rarr; choose **MySQL**.
+3. Select the free **Dev** plan (5 concurrent connections, 20 MB storage).
+4. Name your database `lost_found_db` and click **Create**.
+5. Under the add-on's dashboard, copy the Host, Port, User, Password, and Database Name.
+6. Use phpMyAdmin (accessible from Clever Cloud dashboard) to import `database/lost_found.sql`.
+
+---
+
+### 2. Free Web App Hosting (Render.com via Docker)
+
+**Render.com** allows hosting the Dockerized Tomcat application completely free:
+
+1. **Push your code to GitHub**:
+   ```bash
+   git add .
+   git commit -m "Configure production Docker and PostgreSQL deployment"
+   git push origin main
+   ```
+2. **Create Web Service on Render**:
+   - Go to **[Render.com](https://render.com/)** and sign in.
+   - Click **New +** &rarr; **Web Service**.
+   - Select **Build and deploy from a Git repository** and connect your repository `java_project`.
+3. **Configure Service Details**:
+   - **Name**: `campus-lost-found` (or any custom name)
+   - **Region**: Choose the region closest to your database
+   - **Branch**: `main`
+   - **Runtime**: **Docker** (Render detects the root `Dockerfile` automatically)
+   - **Instance Type**: **Free**
+4. **Configure Environment Variables**:
+   Click **Advanced &rarr; Add Environment Variable**:
+   | Key | Value | Notes |
+   |---|---|---|
+   | `PORT` | `10000` | Port injected by Render |
+   | `DATABASE_URL` | *Your Cloud DB URL* | e.g. `mysql://user:pass@host:port/lost_found_db` or PostgreSQL URL |
+   | `DB_SSLMODE` | `require` | Required when using PostgreSQL host variables; include SSL mode in `DATABASE_URL` when using a URL |
+   | `APP_URL` | `https://your-service-name.onrender.com` | Your live Render URL |
+5. **Click "Create Web Service"**:
+   - Render will automatically trigger `docker build` using the multi-stage Dockerfile.
+   - In 2-3 minutes, your application will be live at:
+     ```
+     https://campus-lost-found.onrender.com/
+     ```
+   - Both `/` and `/LostFoundManagementSystem/` routes work out of the box!
+
+---
+
+### 3. Alternative Free Web App Hosting (Railway or Koyeb)
+
+#### Railway.app:
+1. Sign up on **[Railway.app](https://railway.app/)**.
+2. Click **New Project** &rarr; **Deploy from GitHub repo**.
+3. Railway automatically builds using Dockerfile.
+4. In **Variables**, add `DATABASE_URL` and `PORT=8080`.
+5. Under **Settings &rarr; Networking**, click **Generate Domain**.
 
 ---
 
@@ -479,10 +585,12 @@ Follow these exact steps to run the application inside IntelliJ IDEA with Apache
 
 | Issue / Error | Cause | Resolution |
 |---|---|---|
-| **Database credential error** | Database environment variables are missing or invalid. | Configure Render `DATABASE_URL`, or set `DB_HOST`, `DB_USER`, and `DB_PASSWORD`; for a JDBC `DB_URL`, use `DB_USERNAME` and `DB_PASSWORD`. Keep credentials out of the repository. |
-| **Database does not exist** | PostgreSQL database has not been created yet. | Run `createdb -U postgres lost_found_db`, then restart the application; it initializes an empty database on first connection. |
-| **`java.lang.ClassNotFoundException: org.postgresql.Driver`** | PostgreSQL JDBC Driver missing from the WAR. | Run `mvn clean package` and deploy the newly generated WAR. |
-| **`404 Not Found` when opening application** | Application context path mismatch. | In Tomcat configuration &rarr; Deployment &rarr; set Application context strictly to `/LostFoundManagementSystem`. |
+| **PostgreSQL connection refused** | PostgreSQL is stopped, or the host/port is incorrect. | Start local PostgreSQL or run `docker compose up -d postgres_db`; check `DB_HOST` and `DB_PORT=5432`. |
+| **PostgreSQL password authentication failed** | The configured username or password is incorrect. | Verify `DB_USER` and `DB_PASSWORD` with the database provider; for Compose, use `lostfound` and `lostfound123`. |
+| **MySQL access denied / communications failure** | A configured MySQL service is stopped or the credentials are incorrect. | Check `DB_TYPE=mysql`, `DB_HOST`, `DB_PORT=3306`, and MySQL credentials. |
+| **`Database 'lost_found_db' does not exist`** | The database itself has not been created. | Create an empty PostgreSQL database (`createdb -U postgres lost_found_db`) or use the database provider's console. The app initializes an empty database on first connection. |
+| **`java.lang.ClassNotFoundException: com.mysql.cj.jdbc.Driver`** | Missing MySQL driver in classpath. | Run `mvn clean package` to bundle the updated `mysql-connector-j` into the WAR. |
+| **`404 Not Found` when opening application** | Application context path mismatch. | Both `/` and `/LostFoundManagementSystem/` are now deployed simultaneously to prevent this. Ensure Tomcat 11 is running. |
 | **`500 - java.lang.NoClassDefFoundError: jakarta/servlet/...`** | Older Tomcat version (Tomcat 9 or 8) used. | Apache Tomcat 11 is required for Jakarta EE 11 / Servlet 6.1 specification. |
 | **`File upload size exceeds limit`** | Uploaded image $> 5 \text{ MB}$. | Choose an image file smaller than 5 MB or compress the picture before upload. |
 | **`OTP Expired` error during handover** | 5-minute security timeout elapsed. | Ask the item reporter or an administrator to open the approved claim and select **Regenerate OTP / QR**. |

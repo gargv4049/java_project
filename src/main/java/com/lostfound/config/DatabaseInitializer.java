@@ -19,6 +19,10 @@ import java.util.logging.Logger;
 public class DatabaseInitializer {
 
     private static final Logger LOGGER = Logger.getLogger(DatabaseInitializer.class.getName());
+    private static final String[] REQUIRED_TABLES = {
+            "users", "categories", "items", "claims", "handover_records",
+            "notifications", "reports", "audit_logs", "matches"
+    };
     private static volatile boolean initialized = false;
 
     private DatabaseInitializer() {
@@ -45,6 +49,7 @@ public class DatabaseInitializer {
 
             // Keep legacy account tables usable while removing obsolete external-auth data.
             runSchemaMigrations(conn);
+            verifyRequiredTables(conn);
 
             initialized = true;
             LOGGER.info("Database ready with verified schema.");
@@ -68,6 +73,22 @@ public class DatabaseInitializer {
         return false;
     }
 
+    private static void verifyRequiredTables(Connection conn) throws Exception {
+        StringBuilder missingTables = new StringBuilder();
+        for (String tableName : REQUIRED_TABLES) {
+            if (!tableExists(conn, tableName)) {
+                if (!missingTables.isEmpty()) {
+                    missingTables.append(", ");
+                }
+                missingTables.append(tableName);
+            }
+        }
+        if (!missingTables.isEmpty()) {
+            throw new SQLException("The configured database is missing required application tables: "
+                    + missingTables + ". Initialize or migrate it using src/main/resources/schema.sql.");
+        }
+    }
+
     private static void runSchemaMigrations(Connection conn) throws Exception {
         if (!columnExists(conn, "users", "student_id")) {
             try (Statement st = conn.createStatement()) {
@@ -82,8 +103,10 @@ public class DatabaseInitializer {
                 throw new SQLException("Duplicate login identifiers differ only by letter case. Resolve these rows before startup.");
             }
         }
-        try (Statement st = conn.createStatement()) {
-            st.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_uq ON users (LOWER(email))");
+        if (DatabaseConnection.isPostgreSQL(conn)) {
+            try (Statement st = conn.createStatement()) {
+                st.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_uq ON users (LOWER(email))");
+            }
         }
 
         for (String obsoleteColumn : new String[]{"google_id", "profile_image", "email_verified", "auth_provider"}) {
@@ -113,7 +136,14 @@ public class DatabaseInitializer {
     }
 
     private static boolean tableExists(Connection conn, String tableName) throws Exception {
+        // Direct catalog / schema check
         try (ResultSet tables = conn.getMetaData().getTables(conn.getCatalog(), conn.getSchema(), tableName, new String[]{"TABLE"})) {
+            if (tables.next()) {
+                return true;
+            }
+        }
+        // Fallback case-insensitive search across current catalog
+        try (ResultSet tables = conn.getMetaData().getTables(conn.getCatalog(), null, "%", new String[]{"TABLE"})) {
             while (tables.next()) {
                 if (tableName.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
                     return true;
@@ -124,17 +154,24 @@ public class DatabaseInitializer {
     }
 
     private static void executeSchemaScript(Connection conn) throws Exception {
-        try (InputStream in = DatabaseInitializer.class.getClassLoader().getResourceAsStream("schema.sql")) {
-            if (in == null) {
-                throw new SQLException("schema.sql was not found on the application classpath.");
-            }
+        boolean isMySql = DatabaseConnection.isMySQL(conn);
+        String scriptName = isMySql ? "schema_mysql.sql" : "schema.sql";
 
+        InputStream in = DatabaseInitializer.class.getClassLoader().getResourceAsStream(scriptName);
+        if (in == null) {
+            in = DatabaseInitializer.class.getClassLoader().getResourceAsStream("schema.sql");
+        }
+        if (in == null) {
+            throw new SQLException("Schema SQL script (" + scriptName + ") was not found on the application classpath.");
+        }
+
+        try (InputStream resource = in) {
             StringBuilder sb = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     String trimmed = line.trim();
-                    if (trimmed.startsWith("--") || trimmed.startsWith("//") || trimmed.isEmpty()) {
+                    if (trimmed.startsWith("--") || trimmed.startsWith("//") || trimmed.startsWith("\\") || trimmed.isEmpty()) {
                         continue;
                     }
                     sb.append(line).append("\n");

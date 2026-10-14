@@ -117,14 +117,30 @@ public class AppConfig {
 
         String host = getProperty("DB_HOST", "");
         if (!host.isBlank()) {
-            String port = getProperty("DB_PORT", "5432");
+            String dbType = getProperty("DB_TYPE", "").toLowerCase();
+            String port = getProperty("DB_PORT", "");
+            boolean isPostgres = "postgres".equals(dbType) || "postgresql".equals(dbType) || "5432".equals(port);
+
             String database = getProperty("DB_NAME", getProperty("DB_DATABASE", "lost_found_db"));
-            String sslMode = getProperty("DB_SSLMODE", "prefer");
-            return "jdbc:postgresql://" + host + ":" + port + "/" + database + "?sslmode=" + sslMode;
+            if (isPostgres) {
+                String pgPort = port.isBlank() ? "5432" : port;
+                String sslMode = getProperty("DB_SSLMODE", "prefer");
+                return "jdbc:postgresql://" + host + ":" + pgPort + "/" + database + "?sslmode=" + sslMode;
+            } else {
+                String mysqlPort = port.isBlank() ? "3306" : port;
+                String ssl = "true".equalsIgnoreCase(getProperty("DB_SSL", "false")) || "require".equalsIgnoreCase(getProperty("DB_SSLMODE", "")) ? "true" : "false";
+                return "jdbc:mysql://" + host + ":" + mysqlPort + "/" + database
+                        + "?useSSL=" + ssl + "&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8";
+            }
         }
 
-        String configuredUrl = getProperty("DB_URL", getProperty("db.url", "jdbc:postgresql://localhost:5432/lost_found_db"));
-        return toJdbcUrl(configuredUrl);
+        String configuredUrl = getProperty("DB_URL", getProperty("db.url", ""));
+        if (!configuredUrl.isBlank()) {
+            return toJdbcUrl(configuredUrl);
+        }
+
+        // Default to local PostgreSQL; MySQL remains available through explicit configuration.
+        return "jdbc:postgresql://localhost:5432/lost_found_db?sslmode=prefer";
     }
 
     public static String getDbUsername() {
@@ -133,7 +149,17 @@ public class AppConfig {
                 getProperty("DB_USERNAME", ""),
                 databaseUrlCredential(true),
                 getProperty("db.username", ""));
-        return configuredUsername;
+        if (!configuredUsername.isBlank()) {
+            return configuredUsername;
+        }
+        String url = getDbUrl().toLowerCase();
+        if (url.contains("mysql")) {
+            return "root";
+        }
+        if (url.contains("postgresql")) {
+            return "postgres";
+        }
+        return "";
     }
 
     public static String getDbPassword() {
@@ -143,31 +169,59 @@ public class AppConfig {
                 getProperty("db.password", ""));
     }
 
-    private static String toJdbcUrl(String configuredUrl) {
-        if (configuredUrl.startsWith("jdbc:postgresql:")) {
-            return configuredUrl;
+    public static String toJdbcUrl(String configuredUrl) {
+        String normalizedUrl = normalizeDatabaseUrl(configuredUrl);
+
+        // 1. Direct JDBC URLs
+        if (normalizedUrl.regionMatches(true, 0, "jdbc:mysql:", 0, "jdbc:mysql:".length())) {
+            return normalizedUrl;
         }
-        if (!configuredUrl.startsWith("postgres://") && !configuredUrl.startsWith("postgresql://")) {
-            throw new IllegalArgumentException("Database URL must use jdbc:postgresql:, postgres://, or postgresql://.");
+        if (normalizedUrl.regionMatches(true, 0, "jdbc:postgresql:", 0, "jdbc:postgresql:".length())) {
+            return "jdbc:postgresql:" + normalizedUrl.substring("jdbc:postgresql:".length());
         }
 
-        URI uri = parseDatabaseUri(configuredUrl);
-        String database = uri.getRawPath();
-        if (uri.getHost() == null || database == null || database.length() < 2) {
-            throw new IllegalArgumentException("DATABASE_URL must include a database host and database name.");
+        // 2. MySQL URI format: mysql://user:pass@host:port/database
+        if (normalizedUrl.regionMatches(true, 0, "mysql://", 0, "mysql://".length())) {
+            URI uri = parseDatabaseUri(normalizedUrl);
+            String database = uri.getRawPath();
+            if (uri.getHost() == null || database == null || database.length() < 2) {
+                throw new IllegalArgumentException("DATABASE_URL must include a database host and database name.");
+            }
+            int port = uri.getPort() > 0 ? uri.getPort() : 3306;
+            String query = uri.getRawQuery();
+            String queryParams;
+            if (query != null && !query.isBlank()) {
+                queryParams = "?" + query;
+            } else {
+                queryParams = "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8";
+            }
+            return "jdbc:mysql://" + uri.getHost() + ":" + port + database + queryParams;
         }
 
-        String query = uri.getRawQuery();
-        if (query == null || !query.toLowerCase().contains("sslmode=")) {
-            query = (query == null || query.isBlank() ? "" : query + "&") + "sslmode=require";
+        // 3. PostgreSQL URI format: postgres:// or postgresql://
+        if (normalizedUrl.regionMatches(true, 0, "postgres://", 0, "postgres://".length())
+                || normalizedUrl.regionMatches(true, 0, "postgresql://", 0, "postgresql://".length())) {
+            URI uri = parseDatabaseUri(normalizedUrl);
+            String database = uri.getRawPath();
+            if (uri.getHost() == null || database == null || database.length() < 2) {
+                throw new IllegalArgumentException("DATABASE_URL must include a database host and database name.");
+            }
+
+            String query = uri.getRawQuery();
+            if (query == null || !query.toLowerCase().contains("sslmode=")) {
+                query = (query == null || query.isBlank() ? "" : query + "&") + "sslmode=require";
+            }
+            return "jdbc:postgresql://" + uri.getHost() + (uri.getPort() < 0 ? "" : ":" + uri.getPort())
+                    + database + (query.isBlank() ? "" : "?" + query);
         }
-        return "jdbc:postgresql://" + uri.getHost() + (uri.getPort() < 0 ? "" : ":" + uri.getPort())
-                + database + (query.isBlank() ? "" : "?" + query);
+
+        throw new IllegalArgumentException("Database URL configuration must use jdbc:mysql://, mysql://, "
+                + "jdbc:postgresql://, postgres://, or postgresql://. Check DATABASE_URL or DB_URL.");
     }
 
     private static String databaseUrlCredential(boolean username) {
-        String databaseUrl = getProperty("DATABASE_URL", "");
-        if (databaseUrl.isBlank() || databaseUrl.startsWith("jdbc:")) {
+        String databaseUrl = normalizeDatabaseUrl(getProperty("DATABASE_URL", ""));
+        if (databaseUrl.isBlank() || databaseUrl.regionMatches(true, 0, "jdbc:", 0, "jdbc:".length())) {
             return "";
         }
 
@@ -182,11 +236,23 @@ public class AppConfig {
         return URLDecoder.decode(value.replace("+", "%2B"), StandardCharsets.UTF_8);
     }
 
+    private static String normalizeDatabaseUrl(String configuredUrl) {
+        String normalizedUrl = configuredUrl.trim();
+        if (normalizedUrl.length() >= 2) {
+            char first = normalizedUrl.charAt(0);
+            char last = normalizedUrl.charAt(normalizedUrl.length() - 1);
+            if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
+                normalizedUrl = normalizedUrl.substring(1, normalizedUrl.length() - 1).trim();
+            }
+        }
+        return normalizedUrl;
+    }
+
     private static URI parseDatabaseUri(String databaseUrl) {
         try {
             return URI.create(databaseUrl);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("DATABASE_URL is not a valid PostgreSQL URL.");
+            throw new IllegalArgumentException("DATABASE_URL is not a valid database connection URL.");
         }
     }
 
