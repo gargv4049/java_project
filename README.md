@@ -3,6 +3,8 @@
 > **Enterprise-Grade Java Web Application for University & College Campuses**  
 > Built with Java Servlets (Jakarta EE), JSP, JDBC, PostgreSQL, Bootstrap 5, Apache PDFBox, and ZXing.
 > Directly importable and runnable in **IntelliJ IDEA**, **JDK 25**, and **Apache Tomcat 11**.
+>
+> **Live application:** [https://java-project-v2yg.onrender.com](https://java-project-v2yg.onrender.com)
 
 ---
 
@@ -457,7 +459,7 @@ You can deploy both the database and the web application **100% free** without r
    - Render will automatically trigger `docker build` using the multi-stage Dockerfile.
    - In 2-3 minutes, your application will be live at:
      ```
-     https://campus-lost-found.onrender.com/
+     https://java-project-v2yg.onrender.com/
      ```
    - Both `/` and `/LostFoundManagementSystem/` routes work out of the box!
 
