@@ -4,7 +4,11 @@
 > Built with Java Servlets (Jakarta EE), JSP, JDBC, PostgreSQL, Bootstrap 5, Apache PDFBox, and ZXing.
 > Directly importable and runnable in **IntelliJ IDEA**, **JDK 25**, and **Apache Tomcat 11**.
 >
+> Directly importable and runnable in **IntelliJ IDEA**, **JDK 25**, and **Apache Tomcat 11**.
+>
 > **Live application:** [https://java-project-v2yg.onrender.com](https://java-project-v2yg.onrender.com)
+>
+> **Project files (Google Drive):** [https://drive.google.com/drive/folders/1VcQ_OQUU5KcpfvK2PA2U53tv0wulAC0K](https://drive.google.com/drive/folders/1VcQ_OQUU5KcpfvK2PA2U53tv0wulAC0K)
 
 ---
 
